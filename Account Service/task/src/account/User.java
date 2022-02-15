@@ -39,6 +39,8 @@ public class User {
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column
     @NotBlank
+    //@Size(min = 12,message = "The password length must be at leat 12 chars!")
     String password;
+
 
 }
