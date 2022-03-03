@@ -471,32 +471,6 @@ files:
       };
     }
   learner_created: false
-- name: src/account/UserDetailsServiceImpl.java
-  visible: true
-  text: |
-    package account;
-
-    import org.springframework.beans.factory.annotation.Autowired;
-    import org.springframework.security.core.userdetails.UserDetails;
-    import org.springframework.security.core.userdetails.UserDetailsService;
-    import org.springframework.security.core.userdetails.UsernameNotFoundException;
-    import org.springframework.stereotype.Service;
-
-    @Service
-    public class UserDetailsServiceImpl  implements UserDetailsService {
-        @Autowired
-        UserRepository userRepository;
-
-        @Override
-        public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-            User user = userRepository.findByEmailIgnoreCase(username);
-            if (user == null){
-                throw new UsernameNotFoundException("Not found: " + username);
-            }
-            return new UserDetailsImpl(user);
-        }
-    }
-  learner_created: true
 - name: src/account/UserDetailsImpl.java
   visible: true
   text: |
@@ -678,6 +652,35 @@ files:
         }
     }
   learner_created: true
+- name: src/account/AccountServiceApplication.java
+  visible: true
+  text: |-
+    package account;
+
+    import org.springframework.boot.SpringApplication;
+    import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+    @SpringBootApplication
+    public class AccountServiceApplication {
+
+        public static void main(String[] args) {
+            SpringApplication.run(AccountServiceApplication.class, args);
+        }
+
+    }
+  learner_created: false
+- name: src/account/UserExistException.java
+  visible: true
+  text: |
+    package account;
+
+    import org.springframework.http.HttpStatus;
+    import org.springframework.web.bind.annotation.ResponseStatus;
+
+    @ResponseStatus(code = HttpStatus.BAD_REQUEST, reason = "User exist!")
+    public class UserExistException extends RuntimeException{
+    }
+  learner_created: true
 - name: src/account/User.java
   visible: true
   text: |
@@ -726,23 +729,32 @@ files:
 
     }
   learner_created: true
-- name: src/account/AccountServiceApplication.java
+- name: src/account/UserDetailsServiceImpl.java
   visible: true
-  text: |-
+  text: |
     package account;
 
-    import org.springframework.boot.SpringApplication;
-    import org.springframework.boot.autoconfigure.SpringBootApplication;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.security.core.userdetails.UserDetails;
+    import org.springframework.security.core.userdetails.UserDetailsService;
+    import org.springframework.security.core.userdetails.UsernameNotFoundException;
+    import org.springframework.stereotype.Service;
 
-    @SpringBootApplication
-    public class AccountServiceApplication {
+    @Service
+    public class UserDetailsServiceImpl  implements UserDetailsService {
+        @Autowired
+        UserRepository userRepository;
 
-        public static void main(String[] args) {
-            SpringApplication.run(AccountServiceApplication.class, args);
+        @Override
+        public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+            User user = userRepository.findByEmailIgnoreCase(username);
+            if (user == null){
+                throw new UsernameNotFoundException("Not found: " + username);
+            }
+            return new UserDetailsImpl(user);
         }
-
     }
-  learner_created: false
+  learner_created: true
 - name: src/account/AccauntRestController.java
   visible: true
   text: |
@@ -794,18 +806,6 @@ files:
 
     }
   learner_created: true
-- name: src/account/UserExistException.java
-  visible: true
-  text: |
-    package account;
-
-    import org.springframework.http.HttpStatus;
-    import org.springframework.web.bind.annotation.ResponseStatus;
-
-    @ResponseStatus(code = HttpStatus.BAD_REQUEST, reason = "User exist!")
-    public class UserExistException extends RuntimeException{
-    }
-  learner_created: true
 - name: src/account/ChangePassword.java
   visible: true
   learner_created: true
@@ -814,4 +814,4 @@ status: Solved
 feedback:
   message: Congratulations!
   time: Tue, 15 Feb 2022 12:03:03 UTC
-record: -1
+record: 3
