@@ -90,7 +90,18 @@ public class AccauntRestController {
         throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
+    @PostMapping("api/acct/payments")
+    public ResponseEntity<?> addPayments (@Valid @RequestBody ChangePassword changePassword ){
 
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+    }
+
+    @PutMapping("api/acct/payments")
+    public ResponseEntity<?> updatePayments (@Valid @RequestBody ChangePassword changePassword ){
+
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+    }
+    
 
 
 }
