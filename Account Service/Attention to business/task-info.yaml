@@ -1,5 +1,232 @@
 type: edu
 files:
+- name: src/account/User.java
+  visible: true
+  text: |
+    package account;
+
+    import com.fasterxml.jackson.annotation.JsonProperty;
+    import lombok.AllArgsConstructor;
+    import lombok.Data;
+    import lombok.NoArgsConstructor;
+
+    import javax.persistence.*;
+    import javax.validation.constraints.Email;
+    import javax.validation.constraints.NotBlank;
+    import javax.validation.constraints.Pattern;
+    import javax.validation.constraints.Size;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Entity(name = "user")
+    public class User {
+
+        //@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+        @Id
+        @GeneratedValue(strategy = GenerationType.TABLE)
+        private Long id;
+        @Column
+        @NotBlank
+        String name;
+
+        @Column
+        @NotBlank
+        String lastname;
+
+        @Column
+        @NotBlank
+        @Email
+        @Size(min = 8)
+        @Pattern(regexp = ".+@acme.com")
+        String email;
+
+        @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+        @Column
+        @NotBlank
+        //@Size(min = 12,message = "The password length must be at leat 12 chars!")
+        String password;
+
+
+    }
+  learner_created: true
+- name: src/account/UserDetailsServiceImpl.java
+  visible: true
+  text: |
+    package account;
+
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.security.core.userdetails.UserDetails;
+    import org.springframework.security.core.userdetails.UserDetailsService;
+    import org.springframework.security.core.userdetails.UsernameNotFoundException;
+    import org.springframework.stereotype.Service;
+
+    @Service
+    public class UserDetailsServiceImpl  implements UserDetailsService {
+        @Autowired
+        UserRepository userRepository;
+
+        @Override
+        public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+            User user = userRepository.findByEmailIgnoreCase(username);
+            if (user == null){
+                throw new UsernameNotFoundException("Not found: " + username);
+            }
+            return new UserDetailsImpl(user);
+        }
+    }
+  learner_created: true
+- name: src/account/UserDetailsImpl.java
+  visible: true
+  text: |
+    package account;
+
+    import org.springframework.security.core.GrantedAuthority;
+    import org.springframework.security.core.userdetails.UserDetails;
+
+    import java.util.Collection;
+
+    public class UserDetailsImpl implements UserDetails {
+        private User user;
+
+        public UserDetailsImpl(User user) {
+            this.user = user;
+        }
+
+        @Override
+        public Collection<? extends GrantedAuthority> getAuthorities() {
+            return null;
+        }
+
+        @Override
+        public String getPassword() {
+            return user.getPassword();
+        }
+
+        @Override
+        public String getUsername() {
+            return user.getEmail();
+        }
+
+        @Override
+        public boolean isAccountNonExpired() {
+            return true;
+        }
+
+        @Override
+        public boolean isAccountNonLocked() {
+            return true;
+        }
+
+        @Override
+        public boolean isCredentialsNonExpired() {
+            return true;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return true;
+        }
+    }
+  learner_created: true
+- name: src/account/UserExistException.java
+  visible: true
+  text: |
+    package account;
+
+    import org.springframework.http.HttpStatus;
+    import org.springframework.web.bind.annotation.ResponseStatus;
+
+    @ResponseStatus(code = HttpStatus.BAD_REQUEST, reason = "User exist!")
+    public class UserExistException extends RuntimeException{
+    }
+  learner_created: true
+- name: src/account/UserRepository.java
+  visible: true
+  text: |
+    package account;
+
+    import org.springframework.data.repository.CrudRepository;
+    import org.springframework.stereotype.Component;
+
+
+    @Component
+    public interface UserRepository extends CrudRepository<User, Long> {
+        User findByEmailIgnoreCase(String name);
+
+
+    }
+  learner_created: true
+- name: src/account/RestAuthenticationEntryPoint.java
+  visible: true
+  text: |
+    package account;
+
+    import org.springframework.security.core.AuthenticationException;
+    import org.springframework.security.web.AuthenticationEntryPoint;
+    import org.springframework.stereotype.Component;
+
+    import javax.servlet.ServletException;
+    import javax.servlet.http.HttpServletRequest;
+    import javax.servlet.http.HttpServletResponse;
+    import java.io.IOException;
+
+    @Component
+    public class RestAuthenticationEntryPoint  implements AuthenticationEntryPoint {
+
+        @Override
+        public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, authException.getMessage());
+        }
+    }
+  learner_created: true
+- name: build.gradle
+  visible: true
+  text: |-
+    plugins {
+        id 'java'
+        id 'org.springframework.boot' version '2.3.1.RELEASE'
+        id 'io.spring.dependency-management' version '1.0.9.RELEASE'
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    sourceSets.main.resources.srcDirs = ["src/resources"]
+
+    dependencies {
+        implementation 'org.springframework.boot:spring-boot-starter'
+        implementation 'org.springframework.boot:spring-boot-starter-actuator'
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+        implementation group: 'org.hibernate', name: 'hibernate-validator', version: '6.1.0.Final'
+    }
+  learner_created: false
+- name: src/account/AccountServiceApplication.java
+  visible: true
+  text: |-
+    package account;
+
+    import org.springframework.boot.SpringApplication;
+    import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+    @SpringBootApplication
+    public class AccountServiceApplication {
+
+        public static void main(String[] args) {
+            SpringApplication.run(AccountServiceApplication.class, args);
+        }
+
+    }
+  learner_created: false
+- name: src/resources/application.properties
+  visible: true
+  text: |-
+    server.port=28852
+    management.endpoints.web.exposure.include=*
+    management.endpoint.shutdown.enabled=true
+    spring.jackson.serialization.INDENT_OUTPUT=true
+  learner_created: false
 - name: test/AccountServiceTest.java
   visible: false
   text: |-
@@ -721,172 +948,6 @@ files:
         }
     }
   learner_created: true
-- name: src/account/User.java
-  visible: true
-  text: |
-    package account;
-
-    import com.fasterxml.jackson.annotation.JsonProperty;
-    import lombok.AllArgsConstructor;
-    import lombok.Data;
-    import lombok.NoArgsConstructor;
-
-    import javax.persistence.*;
-    import javax.validation.constraints.Email;
-    import javax.validation.constraints.NotBlank;
-    import javax.validation.constraints.Pattern;
-    import javax.validation.constraints.Size;
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Entity(name = "user")
-    public class User {
-
-        //@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-        @Id
-        @GeneratedValue(strategy = GenerationType.TABLE)
-        private Long id;
-        @Column
-        @NotBlank
-        String name;
-
-        @Column
-        @NotBlank
-        String lastname;
-
-        @Column
-        @NotBlank
-        @Email
-        @Size(min = 8)
-        @Pattern(regexp = ".+@acme.com")
-        String email;
-
-        @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-        @Column
-        @NotBlank
-        //@Size(min = 12,message = "The password length must be at leat 12 chars!")
-        String password;
-
-
-    }
-  learner_created: true
-- name: src/account/ChangePassword.java
-  visible: true
-  text: |
-    package account;
-
-    import com.fasterxml.jackson.annotation.JsonProperty;
-    import lombok.AllArgsConstructor;
-    import lombok.Data;
-    import lombok.NoArgsConstructor;
-    import org.springframework.stereotype.Component;
-
-    import javax.validation.constraints.NotBlank;
-    import javax.validation.constraints.Size;
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    class ChangePassword{
-
-        @NotBlank
-       // @Size(min = 12,message = "The password length must be at leat 12 chars!")
-        @JsonProperty("new_password")
-        private String password;
-    }
-  learner_created: true
-- name: src/account/UserDetailsServiceImpl.java
-  visible: true
-  text: |
-    package account;
-
-    import org.springframework.beans.factory.annotation.Autowired;
-    import org.springframework.security.core.userdetails.UserDetails;
-    import org.springframework.security.core.userdetails.UserDetailsService;
-    import org.springframework.security.core.userdetails.UsernameNotFoundException;
-    import org.springframework.stereotype.Service;
-
-    @Service
-    public class UserDetailsServiceImpl  implements UserDetailsService {
-        @Autowired
-        UserRepository userRepository;
-
-        @Override
-        public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-            User user = userRepository.findByEmailIgnoreCase(username);
-            if (user == null){
-                throw new UsernameNotFoundException("Not found: " + username);
-            }
-            return new UserDetailsImpl(user);
-        }
-    }
-  learner_created: true
-- name: src/account/UserDetailsImpl.java
-  visible: true
-  text: |
-    package account;
-
-    import org.springframework.security.core.GrantedAuthority;
-    import org.springframework.security.core.userdetails.UserDetails;
-
-    import java.util.Collection;
-
-    public class UserDetailsImpl implements UserDetails {
-        private User user;
-
-        public UserDetailsImpl(User user) {
-            this.user = user;
-        }
-
-        @Override
-        public Collection<? extends GrantedAuthority> getAuthorities() {
-            return null;
-        }
-
-        @Override
-        public String getPassword() {
-            return user.getPassword();
-        }
-
-        @Override
-        public String getUsername() {
-            return user.getEmail();
-        }
-
-        @Override
-        public boolean isAccountNonExpired() {
-            return true;
-        }
-
-        @Override
-        public boolean isAccountNonLocked() {
-            return true;
-        }
-
-        @Override
-        public boolean isCredentialsNonExpired() {
-            return true;
-        }
-
-        @Override
-        public boolean isEnabled() {
-            return true;
-        }
-    }
-  learner_created: true
-- name: src/account/UserExistException.java
-  visible: true
-  text: |
-    package account;
-
-    import org.springframework.http.HttpStatus;
-    import org.springframework.web.bind.annotation.ResponseStatus;
-
-    @ResponseStatus(code = HttpStatus.BAD_REQUEST, reason = "User exist!")
-    public class UserExistException extends RuntimeException{
-    }
-  learner_created: true
 - name: src/account/AccauntRestController.java
   visible: true
   text: |
@@ -987,92 +1048,37 @@ files:
 
     }
   learner_created: true
-- name: src/account/UserRepository.java
+- name: src/account/ChangePassword.java
   visible: true
   text: |
     package account;
 
-    import org.springframework.data.repository.CrudRepository;
+    import com.fasterxml.jackson.annotation.JsonProperty;
+    import lombok.AllArgsConstructor;
+    import lombok.Data;
+    import lombok.NoArgsConstructor;
     import org.springframework.stereotype.Component;
 
+    import javax.validation.constraints.NotBlank;
+    import javax.validation.constraints.Size;
 
-    @Component
-    public interface UserRepository extends CrudRepository<User, Long> {
-        User findByEmailIgnoreCase(String name);
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    class ChangePassword{
 
-
+        @NotBlank
+       // @Size(min = 12,message = "The password length must be at leat 12 chars!")
+        @JsonProperty("new_password")
+        private String password;
     }
   learner_created: true
-- name: src/account/RestAuthenticationEntryPoint.java
+- name: src/account/Payment.java
   visible: true
-  text: |
-    package account;
-
-    import org.springframework.security.core.AuthenticationException;
-    import org.springframework.security.web.AuthenticationEntryPoint;
-    import org.springframework.stereotype.Component;
-
-    import javax.servlet.ServletException;
-    import javax.servlet.http.HttpServletRequest;
-    import javax.servlet.http.HttpServletResponse;
-    import java.io.IOException;
-
-    @Component
-    public class RestAuthenticationEntryPoint  implements AuthenticationEntryPoint {
-
-        @Override
-        public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, authException.getMessage());
-        }
-    }
   learner_created: true
-- name: build.gradle
+- name: src/account/PaymentRepository.java
   visible: true
-  text: |-
-    plugins {
-        id 'java'
-        id 'org.springframework.boot' version '2.3.1.RELEASE'
-        id 'io.spring.dependency-management' version '1.0.9.RELEASE'
-    }
-
-    repositories {
-        mavenCentral()
-    }
-
-    sourceSets.main.resources.srcDirs = ["src/resources"]
-
-    dependencies {
-        implementation 'org.springframework.boot:spring-boot-starter'
-        implementation 'org.springframework.boot:spring-boot-starter-actuator'
-        implementation 'org.springframework.boot:spring-boot-starter-web'
-        implementation group: 'org.hibernate', name: 'hibernate-validator', version: '6.1.0.Final'
-    }
-  learner_created: false
-- name: src/account/AccountServiceApplication.java
-  visible: true
-  text: |-
-    package account;
-
-    import org.springframework.boot.SpringApplication;
-    import org.springframework.boot.autoconfigure.SpringBootApplication;
-
-    @SpringBootApplication
-    public class AccountServiceApplication {
-
-        public static void main(String[] args) {
-            SpringApplication.run(AccountServiceApplication.class, args);
-        }
-
-    }
-  learner_created: false
-- name: src/resources/application.properties
-  visible: true
-  text: |-
-    server.port=28852
-    management.endpoints.web.exposure.include=*
-    management.endpoint.shutdown.enabled=true
-    spring.jackson.serialization.INDENT_OUTPUT=true
-  learner_created: false
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/217/stages/1089/implement#comment
 status: Unchecked
 record: -1

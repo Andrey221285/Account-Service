@@ -14,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.transaction.Transactional;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -21,10 +22,12 @@ import javax.validation.constraints.Size;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 @RestController
 public class AccauntRestController {
     @Autowired UserRepository userRepository;
+    @Autowired PaymentRepository paymentRepository;
     @Autowired PasswordEncoder encoder;
 
     private HashSet<String> hackedPassword = new HashSet<>(Arrays.asList("PasswordForJanuary", "PasswordForFebruary", "PasswordForMarch", "PasswordForApril",
@@ -91,9 +94,16 @@ public class AccauntRestController {
     }
 
     @PostMapping("api/acct/payments")
-    public ResponseEntity<?> addPayments (@Valid @RequestBody ChangePassword changePassword ){
+    public ResponseEntity<?> addPayments (@RequestBody List<@Valid Payment> payments ){
+        saveAllPayments(payments);
+        HashMap<String, String> m = new HashMap<>();
+        m.put("status","Added successfully!");
+        return new ResponseEntity<>(m,HttpStatus.OK);
+    }
 
-        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+    @Transactional
+    public void saveAllPayments (List<@Valid Payment> payments ){
+        paymentRepository.saveAll(payments);
     }
 
     @PutMapping("api/acct/payments")
@@ -101,7 +111,6 @@ public class AccauntRestController {
 
         throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
-    
 
 
 }
