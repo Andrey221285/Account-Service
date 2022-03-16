@@ -14,17 +14,18 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
+import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
 
 @RestController
+//@ControllerAdvice
 public class AccauntRestController {
     @Autowired UserRepository userRepository;
     @Autowired PaymentRepository paymentRepository;
@@ -102,8 +103,18 @@ public class AccauntRestController {
     }
 
     @Transactional
-    public void saveAllPayments (List<@Valid Payment> payments ){
-        paymentRepository.saveAll(payments);
+    public void saveAllPayments (List<@Valid Payment> payments) {
+//        paymentRepository.saveAll(payments);
+        for(var p : payments){
+            User u = userRepository.findByEmailIgnoreCase(p.getEmployee());
+            if (u!= null){
+                p.setUser(u);
+                paymentRepository.save(p);
+            } else {
+                throw new RuntimeException();
+//                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ненту юзера");
+            }
+        }
     }
 
     @PutMapping("api/acct/payments")
@@ -112,5 +123,18 @@ public class AccauntRestController {
         throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
+//    @ExceptionHandler(Exception.class)
+//    public ResponseEntity handle(Exception constraintViolationException) {
+////        Set<ConstraintViolation<?>> violations = constraintViolationException.getConstraintViolations();
+//        String errorMessage = "Моя ошибка: ";
+////        if (!violations.isEmpty()) {
+////            StringBuilder builder = new StringBuilder();
+////            violations.forEach(violation -> builder.append(" " + violation.getMessage()));
+////            errorMessage = builder.toString();
+////        } else {
+////            errorMessage = "ConstraintViolationException occured.";
+////        }
+//        return new ResponseEntity<>(errorMessage, HttpStatus.BAD_REQUEST);
+//    }
 
 }

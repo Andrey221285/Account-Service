@@ -1,4 +1,4 @@
-<h5>Description</h5>
+<h5 id="description">Description</h5>
 
 <p>Our service is almost ready; only the roles remain. We need to add the <strong>authorization</strong>. Authorization is a process when the system decides whether an authenticated client has permission to access the requested resource. Authorization always follows authentication.</p>
 
@@ -74,19 +74,19 @@
 
 <p><button
         class="btn-sm btn-outline-secondary"
-        onclick="getElementById('hint-1828').style.display='inline'">
+        onclick="getElementById('hint-1845').style.display='inline'">
         Hint
       </button>
-      <div id="hint-1828" style="display:none;">You can use the article <a target="_blank" href="https://www.javadevjournal.com/spring-security/spring-security-roles-and-permissions/" rel="noopener noreferrer nofollow">Spring Security Roles and Permissions</a> by JavadevJournal and <a target="_blank" href="https://www.baeldung.com/spring-security-method-security" rel="noopener noreferrer nofollow">Introduction to Spring Method Security</a> by Baeldung to learn more about the authorization in Spring Boot.</p>
+      <div id="hint-1845" style="display:none;">You can use the article <a target="_blank" href="https://www.javadevjournal.com/spring-security/spring-security-roles-and-permissions/" rel="noopener noreferrer nofollow">Spring Security Roles and Permissions</a> by JavadevJournal and <a target="_blank" href="https://www.baeldung.com/spring-security-method-security" rel="noopener noreferrer nofollow">Introduction to Spring Method Security</a> by Baeldung to learn more about the authorization in Spring Boot.</p>
 
 <p>We also advise you to take a look at the following articles; they may help you a lot: <a target="_blank" href="https://www.baeldung.com/spring-security-custom-access-denied-page" rel="noopener noreferrer nofollow">Spring Security – Customize the 403 Forbidden/Access Denied Page</a> and <a target="_blank" href="https://www.baeldung.com/hibernate-initialize-proxy-exception" rel="noopener noreferrer nofollow">Hibernate could not initialize proxy – no Session</a> by Baeldung </div></p>
 
 <p><button
         class="btn-sm btn-outline-secondary"
-        onclick="getElementById('hint-2732').style.display='inline'">
+        onclick="getElementById('hint-2749').style.display='inline'">
         Hint
       </button>
-      <div id="hint-2732" style="display:none;">Some hints on how to create a table with user roles at the start of the service:</p>
+      <div id="hint-2749" style="display:none;">Some hints on how to create a table with user roles at the start of the service:</p>
 
 <pre><code class="language-java">@Component
 public class DataLoader {
@@ -133,7 +133,7 @@ public class DataLoader {
 <p>The roles should be divided into 2 groups: administrative (<code class="language-java">Administrator</code>) and business users (<code class="language-java">Accountant</code>, <code class="language-java">User</code>).<br>
     Do not mix up the groups; a user can be either from the administrative or business group. A user with an administrative role should not have access to business functions and vice versa.</p>
 
-<h5>Objectives</h5>
+<h5 id="objectives">Objectives</h5>
 
 <p>Add the authorization to the service and implement the role model shown in the table above. The first registered user should receive the <code class="language-java">Administrator</code> role, the rest — <code class="language-java">Users</code>. In case of authorization violation, respond with <code class="language-java">HTTP Forbidden</code> status <code class="language-java">(403)</code> and the following body:</p>
 
@@ -294,7 +294,7 @@ public class DataLoader {
     "path": "/api/admin/user/role"
 }</code></pre>
 
-<h5>Examples</h5>
+<h5 id="examples">Examples</h5>
 
 <p><strong>Example 1: </strong><em>a </em><em>PUT request for /api/admin/user/role with the correct authentication under the Administrator role</em></p>
 

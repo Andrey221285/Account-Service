@@ -9,7 +9,7 @@ import java.util.List;
 
 @Component
 public interface PaymentRepository extends CrudRepository<Payment, Long> {
-
-
-
+    @Transactional
+    @Override
+    <S extends Payment> Iterable<S> saveAll(Iterable<S> entities);
 }

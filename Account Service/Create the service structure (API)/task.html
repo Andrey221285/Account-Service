@@ -1,4 +1,4 @@
-<h5>Description</h5>
+<h5 id="description">Description</h5>
 
 <p>It's time to plan the architecture of our service. A good plan is 50% of the result. To begin with, we will determine the functions of our service, group them, and plan the appropriate endpoints following the principles of the <code class="language-json">REST</code> API:</p>
 
@@ -103,7 +103,7 @@
 
 <p>Later, we will reveal the purpose of the roles.</p>
 
-<h5>Objectives</h5>
+<h5 id="objectives">Objectives</h5>
 
 <p>In this stage, our goal is to run a SpringBoot web application for our service and test it with one endpoint.</p>
 
@@ -128,7 +128,7 @@
 
 <p>If the status is <code class="language-json">HTTP OK (200)</code>, then all fields are correct. If it's <code class="language-json">HTTP Bad Request</code> (<code class="language-json">400</code>), then something is wrong. Our service must accept only corporate emails that end with <code class="language-json">@acme.com</code>. In this stage, we do not check the authentication, so the password field may contain anything (but not empty).</p>
 
-<h5>Examples</h5>
+<h5 id="examples">Examples</h5>
 
 <p><strong>Example 1: </strong><em>a POST request for api/auth/signup</em></p>
 

@@ -1,15 +1,15 @@
-<h5>Description</h5>
+<h5 id="description">Description</h5>
 
 <p>You have probably heard a lot of stories about how hackers brute-force user passwords or exploit the weaknesses of the authentication mechanism. Let's figure out how to make our authentication procedure more secure. In the field of web application security, the most authoritative source is <a target="_blank" href="https://owasp.org/" rel="noopener noreferrer nofollow">OWASP</a> (Open Web Application Security Project). The project regularly publishes information about the most dangerous risks associated with the web (<a target="_blank" href="https://owasp.org/www-project-top-ten/" rel="noopener noreferrer nofollow">Top Ten</a>), as well as recommendations for fortifying security. For example, such recommendations can be found in the <a target="_blank" href="https://github.com/OWASP/ASVS" rel="noopener noreferrer nofollow">ASVS</a> (Application Security Verification Standard). To ensure the security of the authentication, the standard offers several dozen security measures, but the ACME Security Department has selected only a few of them, namely, the password security requirements.</p>
 
 <p>Here they are:</p>
 
 <ul>
-    <li> Verify that user passwords contain at least <strong>12 characters</strong>;</li>
-    <li> Verify that users can <strong>change</strong> their passwords. Changing the password requires the current and a new password;</li>
-    <li> Verify that the passwords submitted during a registration, login, and password change are checked against a <strong>set of breached passwords</strong>. If the password is breached, the application must require users to set a new non-breached password.</li>
-    <li>Verify that passwords are stored in a form that is resistant to offline attacks. Passwords must be <strong>salted</strong> and <strong>hashed</strong> using an approved one-way key derivation or a password hashing function;</li>
-    <li>If you use <code class="language-java">bcrypt</code>, the work factor must be as large as the verification server performance will allow. Usually, at least 13.</li>
+	<li> Verify that user passwords contain at least <strong>12 characters</strong>;</li>
+	<li> Verify that users can <strong>change</strong> their passwords. Changing the password requires the current and a new password;</li>
+	<li> Verify that the passwords submitted during a registration, login, and password change are checked against a <strong>set of breached passwords</strong>. If the password is breached, the application must require users to set a new non-breached password.</li>
+	<li>Verify that passwords are stored in a form that is resistant to offline attacks. Passwords must be <strong>salted</strong> and <strong>hashed</strong> using an approved one-way key derivation or a password hashing function;</li>
+	<li>If you use <code class="language-java">bcrypt</code>, the work factor must be as large as the verification server performance will allow. Usually, at least 13.</li>
 </ul>
 
 <p>At this stage, your need to implement the API for changing a user's password.</p>
@@ -32,7 +32,7 @@ encoder.matches("new_password", hashOfOldPassword)</code></pre>
  "PasswordForMay", "PasswordForJune", "PasswordForJuly", "PasswordForAugust",
  "PasswordForSeptember", "PasswordForOctober", "PasswordForNovember", "PasswordForDecember"}</code></pre>
 
-<h5>Objectives</h5>
+<h5 id="objectives">Objectives</h5>
 
 <p>Implement the following password checks when registering a user or changing a password:</p>
 
@@ -42,7 +42,7 @@ encoder.matches("new_password", hashOfOldPassword)</code></pre>
     "timestamp": "&lt;data&gt;",
     "status": 400,
     "error": "Bad Request",
-    "message": "The password length must be at leat 12 chars!",
+    "message": "The password length must be at least 12 chars!",
     "path": "&lt;api&gt;"
 }</code></pre>
 
@@ -79,7 +79,7 @@ encoder.matches("new_password", hashOfOldPassword)</code></pre>
     "path": "&lt;api&gt;"
 }</code></pre>
 
-<h5>Examples</h5>
+<h5 id="examples">Examples</h5>
 
 <p><strong>Example 1: </strong><em>a </em><em>POST request for api/auth/signup</em></p>
 

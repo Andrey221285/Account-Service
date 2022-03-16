@@ -1,4 +1,4 @@
-<h5>Description</h5>
+<h5 id="description">Description</h5>
 
 <p>Our last step in the project is to ensure the security of our service. By now, all data, authentication, and business information is transmitted over an unsecured communication channel and can be easily intercepted. The solution to this problem is the HTTPS protocol. Implementing HTTPS in Spring Boot is easy, but first, you need to generate a private key and a certificate. To do this, you can use the <code class="java">keytool</code> utility that is included in the JDK. Save the certificate file in the <code class="java">keystore</code> directory in the resource folder of the Spring Boot application:</p>
 
@@ -20,12 +20,12 @@ server.ssl.key-alias=accountant_service</code></pre>
 
 <p><button
         class="btn-sm btn-outline-secondary"
-        onclick="getElementById('hint-1343').style.display='inline'">
+        onclick="getElementById('hint-1360').style.display='inline'">
         Hint
       </button>
-      <div id="hint-1343" style="display:none;"><a target="_blank" href="https://dzone.com/articles/ssl-in-java" rel="noopener noreferrer nofollow">Everything About HTTPS and SSL (Java)</a> by DZone can shed more light on this issue.</div></p>
+      <div id="hint-1360" style="display:none;"><a target="_blank" href="https://dzone.com/articles/ssl-in-java" rel="noopener noreferrer nofollow">Everything About HTTPS and SSL (Java)</a> by DZone can shed more light on this issue.</div></p>
 
-<h5>Objectives</h5>
+<h5 id="objectives">Objectives</h5>
 
 <ul>
     <li>Generate the certificate with <code class="java">CN=accountant_service</code>;</li>

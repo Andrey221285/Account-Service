@@ -27,4 +27,8 @@ public class Payment {
     @Min(value = 0)
     @Column
     Long salary;
+
+    @ManyToOne
+    @JoinColumn(name="user_id", nullable=false)
+    private User user;
 }

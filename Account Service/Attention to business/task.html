@@ -1,4 +1,4 @@
-<h5>Description</h5>
+<h5 id="description">Description</h5>
 
 <p>It's time to start with the business functions of our application! We remind you that our service must provide users with information about the employee's salary for the selected period. Also, our service should allow the accountant to upload information about the salary of employees. Take another look at the endpoints:</p>
 
@@ -22,10 +22,10 @@
 
 <p><button
         class="btn-sm btn-outline-secondary"
-        onclick="getElementById('hint-1761').style.display='inline'">
+        onclick="getElementById('hint-1778').style.display='inline'">
         Hint
       </button>
-      <div id="hint-1761" style="display:none;">Take a look at some useful articles for implementing transactions in Spring Boot:</p>
+      <div id="hint-1778" style="display:none;">Take a look at some useful articles for implementing transactions in Spring Boot:</p>
 
 <p><a target="_blank" href="https://dzone.com/articles/spring-boot-transaction-management-hello-world-exa" rel="noopener noreferrer nofollow">Spring Boot Transaction Management</a> by DZone, <a target="_blank" href="https://www.baeldung.com/transaction-configuration-with-jpa-and-spring" rel="noopener noreferrer nofollow">Transactions with Spring and JPA</a> by Baelduing.</p>
 
@@ -33,7 +33,7 @@
 
 <p><a target="_blank" href="https://www.baeldung.com/spring-validate-list-controller" rel="noopener noreferrer nofollow">Validating Lists in a Spring Controller</a> by Baelding, <a target="_blank" href="https://mkyong.com/spring-boot/spring-rest-error-handling-example/" rel="noopener noreferrer nofollow">Spring REST Error Handling Example</a> by Mkyoung.</div></p>
 
-<h5>Objectives</h5>
+<h5 id="objectives">Objectives</h5>
 
 <p>Add the <code class="language-json">POST api/acct/payments</code> endpoint. It must be available to unauthorized users, accept data in JSON format, and store it in the database. The operation must be transactional! The JSON is as follows:</p>
 
@@ -119,7 +119,7 @@
     "path": "api/empl/payment"
 }</code></pre>
 
-<h5>Examples</h5>
+<h5 id="examples">Examples</h5>
 
 <p><div class="alert alert-warning">The tests do not check the contents of the <code class="language-json">message</code> field.</div></p>
 
