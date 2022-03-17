@@ -24,7 +24,7 @@ public class Payment {
     @Column
     String  period;
 
-    @Min(value = 0)
+//    @Min(value = 0)
     @Column
     Long salary;
 

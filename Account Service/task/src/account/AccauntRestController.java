@@ -1,140 +1,209 @@
 package account;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import account.dto.PaymentResponseDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
-import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import java.lang.reflect.InvocationTargetException;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @RestController
 //@ControllerAdvice
 public class AccauntRestController {
-    @Autowired UserRepository userRepository;
-    @Autowired PaymentRepository paymentRepository;
-    @Autowired PasswordEncoder encoder;
+    @Autowired
+    UserRepository userRepository;
+    @Autowired
+    PaymentRepository paymentRepository;
+    @Autowired
+    PasswordEncoder encoder;
 
     private HashSet<String> hackedPassword = new HashSet<>(Arrays.asList("PasswordForJanuary", "PasswordForFebruary", "PasswordForMarch", "PasswordForApril",
             "PasswordForMay", "PasswordForJune", "PasswordForJuly", "PasswordForAugust",
             "PasswordForSeptember", "PasswordForOctober", "PasswordForNovember", "PasswordForDecember"));
 
-    @ExceptionHandler({ ConstraintViolationException.class })
-    @PostMapping ("/api/auth/signup")
-    public ResponseEntity<?> signup (@Valid @RequestBody User user){
-        if (user.getPassword().length() < 12){
+    @ExceptionHandler({ConstraintViolationException.class})
+    @PostMapping("/api/auth/signup")
+    public ResponseEntity<?> signup(@Valid @RequestBody User user) {
+        if (user.getPassword().length() < 12) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password length must be 12 chars minimum!");
         }
 
 
-         if (hackedPassword.contains(user.getPassword())){
-             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The password is in the hacker's database!");
-         }
+        if (hackedPassword.contains(user.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The password is in the hacker's database!");
+        }
 
 
         User userOld = userRepository.findByEmailIgnoreCase(user.getEmail());
-        if (userOld == null){
+        if (userOld == null) {
             user.setPassword(encoder.encode(user.getPassword()));
             userRepository.save(user);
-            return new ResponseEntity<>(user,HttpStatus.OK);
+            return new ResponseEntity<>(user, HttpStatus.OK);
         }
 
         throw new UserExistException();
     }
 
+    public static void main(String[] args) {
+        String date = "01-2021";
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-yyyy");
+        DateTimeFormatter formatter2 = DateTimeFormatter.ofPattern("MMMM-yyyy");
+        YearMonth ym = YearMonth.parse(date, formatter);
+        System.out.println(ym.format(formatter2));
+        System.out.println(ym.getMonth());
+        System.out.println(ym.getYear());
+
+
+        long salary = 123456;
+        System.out.println(salaryToString(salary));
+    }
+
     @GetMapping("api/empl/payment")
-    public ResponseEntity<?> getPayment (@AuthenticationPrincipal UserDetails details){
-        if (details != null){
+    public ResponseEntity<?> getPayment(@AuthenticationPrincipal UserDetails details,@RequestParam(required = false) String period) {
+        if (details != null) {
             User user = userRepository.findByEmailIgnoreCase(details.getUsername());
-            return new ResponseEntity<>(user,HttpStatus.OK);
+
+            if (period == null){
+                List<PaymentResponseDto> list = new ArrayList<>();
+                List<Payment> payments = paymentRepository.findByEmployeeIgnoreCase(user.getEmail());
+                for (Payment p : payments){
+                    list.add(createPaymentMessage(user, p));
+                }
+                list.sort(Comparator.comparing(PaymentResponseDto::periodYearMonth).reversed());
+
+                return new ResponseEntity<>(list, HttpStatus.OK);
+            } else {
+                Payment p = paymentRepository.findByEmployeeIgnoreCaseAndPeriod(user.getEmail(),period);
+                if (p!=null){
+                    return new ResponseEntity<>(createPaymentMessage(user, p), HttpStatus.OK);
+                }else {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "указан неверный период");
+                }
+            }
         }
 
         throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
+
+    private PaymentResponseDto createPaymentMessage(User user, Payment p) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-yyyy");
+        YearMonth ym = YearMonth.parse(p.getPeriod(), formatter);
+        return new PaymentResponseDto(user.getName(),user.getLastname(),ym,salaryToString(p.getSalary()));
+    }
+
+    private static String salaryToString(long salary){
+        long dollar = salary/100;
+        long cent = salary%100;
+        String s = dollar + " dollar(s) " + cent + " cent(s)";
+        return s;
+
+    }
+
     @PostMapping("api/auth/changepass")
-    public ResponseEntity<?> changePassword (@AuthenticationPrincipal UserDetails details,@Valid @RequestBody ChangePassword changePassword ){
-        if (details != null){
-            if (changePassword.getPassword().length() < 12){
+    public ResponseEntity<?> changePassword(@AuthenticationPrincipal UserDetails details, @Valid @RequestBody ChangePassword changePassword) {
+        if (details != null) {
+            if (changePassword.getPassword().length() < 12) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password length must be 12 chars minimum!");
             }
-            System.out.println("password = "+ changePassword.getPassword());
-            if (hackedPassword.contains(changePassword.getPassword())){
+            System.out.println("password = " + changePassword.getPassword());
+            if (hackedPassword.contains(changePassword.getPassword())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The password is in the hacker's database!");
             }
             User user = userRepository.findByEmailIgnoreCase(details.getUsername());
-            if( encoder.matches(changePassword.getPassword(), user.getPassword())){
-                throw new  ResponseStatusException(HttpStatus.BAD_REQUEST, "The passwords must be different!");
+            if (encoder.matches(changePassword.getPassword(), user.getPassword())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The passwords must be different!");
             }
             user.setPassword(encoder.encode(changePassword.getPassword()));
             userRepository.save(user);
             HashMap<String, String> map = new HashMap<>();
-            map.put("email",user.getEmail().toLowerCase());
+            map.put("email", user.getEmail().toLowerCase());
             map.put("status", "The password has been updated successfully");
 
-            return new ResponseEntity<>(map,HttpStatus.OK);
+            return new ResponseEntity<>(map, HttpStatus.OK);
         }
 
         throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
     @PostMapping("api/acct/payments")
-    public ResponseEntity<?> addPayments (@RequestBody List<@Valid Payment> payments ){
+    @Transactional
+    public ResponseEntity<?> addPayments(@RequestBody List<Payment> payments) {
         saveAllPayments(payments);
         HashMap<String, String> m = new HashMap<>();
-        m.put("status","Added successfully!");
-        return new ResponseEntity<>(m,HttpStatus.OK);
+        m.put("status", "Added successfully!");
+        return new ResponseEntity<>(m, HttpStatus.OK);
     }
 
-    @Transactional
-    public void saveAllPayments (List<@Valid Payment> payments) {
+
+    public void saveAllPayments(List<Payment> payments) {
 //        paymentRepository.saveAll(payments);
-        for(var p : payments){
+
+        for (var p : payments) {
+            if (p.getSalary() <=0){
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "отрицательная зарплата");
+            }
+            YearMonth ym = null;
+            try {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-yyyy");
+                 ym = YearMonth.parse(p.getPeriod(),formatter);
+            } catch (Exception e) {
+                //e.printStackTrace();
+            }
+
+            if (ym == null){
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "неправильная дата");
+            }
+
             User u = userRepository.findByEmailIgnoreCase(p.getEmployee());
-            if (u!= null){
+            if (u != null) {
+                Payment pp = paymentRepository.findByEmployeeIgnoreCaseAndPeriod(p.getEmployee(), p.getPeriod());
+                if (pp!=null){
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ведомость уже существует");
+                }
                 p.setUser(u);
                 paymentRepository.save(p);
             } else {
-                throw new RuntimeException();
-//                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ненту юзера");
+//                throw new RuntimeException();
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "нету юзера");
             }
         }
     }
 
     @PutMapping("api/acct/payments")
-    public ResponseEntity<?> updatePayments (@Valid @RequestBody ChangePassword changePassword ){
+    public ResponseEntity<?> updatePayments(@RequestBody Payment newPayment) {
+        if (newPayment.getSalary() <=0){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "отрицательная зарплата");
+        }
 
-        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        User u = userRepository.findByEmailIgnoreCase(newPayment.getEmployee());
+        if (u != null) {
+            Payment oldPayment = paymentRepository.findByEmployeeIgnoreCaseAndPeriod(newPayment.getEmployee(), newPayment.getPeriod());
+            if (oldPayment!=null){
+                oldPayment.setSalary(newPayment.getSalary());
+                paymentRepository.save(oldPayment);
+
+            } else {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Error!");
+            }
+        } else {
+//                throw new RuntimeException();
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "нету юзера");
+        }
+        HashMap<String, String> m = new HashMap<>();
+        m.put("status", "Updated successfully!");
+        return new ResponseEntity<>(m, HttpStatus.OK);
     }
 
-//    @ExceptionHandler(Exception.class)
-//    public ResponseEntity handle(Exception constraintViolationException) {
-////        Set<ConstraintViolation<?>> violations = constraintViolationException.getConstraintViolations();
-//        String errorMessage = "Моя ошибка: ";
-////        if (!violations.isEmpty()) {
-////            StringBuilder builder = new StringBuilder();
-////            violations.forEach(violation -> builder.append(" " + violation.getMessage()));
-////            errorMessage = builder.toString();
-////        } else {
-////            errorMessage = "ConstraintViolationException occured.";
-////        }
-//        return new ResponseEntity<>(errorMessage, HttpStatus.BAD_REQUEST);
-//    }
 
 }

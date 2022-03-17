@@ -1,84 +1,5 @@
 type: edu
 files:
-- name: src/account/UserDetailsServiceImpl.java
-  visible: true
-  text: |
-    package account;
-
-    import org.springframework.beans.factory.annotation.Autowired;
-    import org.springframework.security.core.userdetails.UserDetails;
-    import org.springframework.security.core.userdetails.UserDetailsService;
-    import org.springframework.security.core.userdetails.UsernameNotFoundException;
-    import org.springframework.stereotype.Service;
-
-    @Service
-    public class UserDetailsServiceImpl  implements UserDetailsService {
-        @Autowired
-        UserRepository userRepository;
-
-        @Override
-        public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-            User user = userRepository.findByEmailIgnoreCase(username);
-            if (user == null){
-                throw new UsernameNotFoundException("Not found: " + username);
-            }
-            return new UserDetailsImpl(user);
-        }
-    }
-  learner_created: true
-- name: src/account/UserDetailsImpl.java
-  visible: true
-  text: |
-    package account;
-
-    import org.springframework.security.core.GrantedAuthority;
-    import org.springframework.security.core.userdetails.UserDetails;
-
-    import java.util.Collection;
-
-    public class UserDetailsImpl implements UserDetails {
-        private User user;
-
-        public UserDetailsImpl(User user) {
-            this.user = user;
-        }
-
-        @Override
-        public Collection<? extends GrantedAuthority> getAuthorities() {
-            return null;
-        }
-
-        @Override
-        public String getPassword() {
-            return user.getPassword();
-        }
-
-        @Override
-        public String getUsername() {
-            return user.getEmail();
-        }
-
-        @Override
-        public boolean isAccountNonExpired() {
-            return true;
-        }
-
-        @Override
-        public boolean isAccountNonLocked() {
-            return true;
-        }
-
-        @Override
-        public boolean isCredentialsNonExpired() {
-            return true;
-        }
-
-        @Override
-        public boolean isEnabled() {
-            return true;
-        }
-    }
-  learner_created: true
 - name: src/account/UserExistException.java
   visible: true
   text: |
@@ -153,14 +74,6 @@ files:
 
     }
   learner_created: false
-- name: src/resources/application.properties
-  visible: true
-  text: |-
-    server.port=28852
-    management.endpoints.web.exposure.include=*
-    management.endpoint.shutdown.enabled=true
-    spring.jackson.serialization.INDENT_OUTPUT=true
-  learner_created: false
 - name: src/account/WebSecurityConfigurerImpl.java
   visible: true
   text: |
@@ -220,9 +133,6 @@ files:
         }
     }
   learner_created: true
-- name: src/account/Payment.java
-  visible: true
-  learner_created: true
 - name: src/account/ChangePassword.java
   visible: true
   text: |
@@ -247,59 +157,6 @@ files:
         @JsonProperty("new_password")
         private String password;
     }
-  learner_created: true
-- name: src/account/User.java
-  visible: true
-  text: |
-    package account;
-
-    import com.fasterxml.jackson.annotation.JsonProperty;
-    import lombok.AllArgsConstructor;
-    import lombok.Data;
-    import lombok.NoArgsConstructor;
-
-    import javax.persistence.*;
-    import javax.validation.constraints.Email;
-    import javax.validation.constraints.NotBlank;
-    import javax.validation.constraints.Pattern;
-    import javax.validation.constraints.Size;
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Entity(name = "user")
-    public class User {
-
-        //@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-        @Id
-        @GeneratedValue(strategy = GenerationType.TABLE)
-        private Long id;
-        @Column
-        @NotBlank
-        String name;
-
-        @Column
-        @NotBlank
-        String lastname;
-
-        @Column
-        @NotBlank
-        @Email
-        @Size(min = 8)
-        @Pattern(regexp = ".+@acme.com")
-        String email;
-
-        @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-        @Column
-        @NotBlank
-        //@Size(min = 12,message = "The password length must be at leat 12 chars!")
-        String password;
-
-
-    }
-  learner_created: true
-- name: src/account/PaymentRepository.java
-  visible: true
   learner_created: true
 - name: src/account/UserRepository.java
   visible: true
@@ -979,6 +836,146 @@ files:
       };
     }
   learner_created: false
+- name: src/resources/application.properties
+  visible: true
+  text: |-
+    server.port=28852
+    management.endpoints.web.exposure.include=*
+    management.endpoint.shutdown.enabled=true
+    spring.jackson.serialization.INDENT_OUTPUT=true
+  learner_created: false
+- name: src/account/User.java
+  visible: true
+  text: |
+    package account;
+
+    import com.fasterxml.jackson.annotation.JsonProperty;
+    import lombok.AllArgsConstructor;
+    import lombok.Data;
+    import lombok.NoArgsConstructor;
+
+    import javax.persistence.*;
+    import javax.validation.constraints.Email;
+    import javax.validation.constraints.NotBlank;
+    import javax.validation.constraints.Pattern;
+    import javax.validation.constraints.Size;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Entity(name = "user")
+    public class User {
+
+        //@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+        @Id
+        @GeneratedValue(strategy = GenerationType.TABLE)
+        private Long id;
+        @Column
+        @NotBlank
+        String name;
+
+        @Column
+        @NotBlank
+        String lastname;
+
+        @Column
+        @NotBlank
+        @Email
+        @Size(min = 8)
+        @Pattern(regexp = ".+@acme.com")
+        String email;
+
+        @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+        @Column
+        @NotBlank
+        //@Size(min = 12,message = "The password length must be at leat 12 chars!")
+        String password;
+
+
+    }
+  learner_created: true
+- name: src/account/UserDetailsServiceImpl.java
+  visible: true
+  text: |
+    package account;
+
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.security.core.userdetails.UserDetails;
+    import org.springframework.security.core.userdetails.UserDetailsService;
+    import org.springframework.security.core.userdetails.UsernameNotFoundException;
+    import org.springframework.stereotype.Service;
+
+    @Service
+    public class UserDetailsServiceImpl  implements UserDetailsService {
+        @Autowired
+        UserRepository userRepository;
+
+        @Override
+        public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+            User user = userRepository.findByEmailIgnoreCase(username);
+            if (user == null){
+                throw new UsernameNotFoundException("Not found: " + username);
+            }
+            return new UserDetailsImpl(user);
+        }
+    }
+  learner_created: true
+- name: src/account/PaymentRepository.java
+  visible: true
+  learner_created: true
+- name: src/account/UserDetailsImpl.java
+  visible: true
+  text: |
+    package account;
+
+    import org.springframework.security.core.GrantedAuthority;
+    import org.springframework.security.core.userdetails.UserDetails;
+
+    import java.util.Collection;
+
+    public class UserDetailsImpl implements UserDetails {
+        private User user;
+
+        public UserDetailsImpl(User user) {
+            this.user = user;
+        }
+
+        @Override
+        public Collection<? extends GrantedAuthority> getAuthorities() {
+            return null;
+        }
+
+        @Override
+        public String getPassword() {
+            return user.getPassword();
+        }
+
+        @Override
+        public String getUsername() {
+            return user.getEmail();
+        }
+
+        @Override
+        public boolean isAccountNonExpired() {
+            return true;
+        }
+
+        @Override
+        public boolean isAccountNonLocked() {
+            return true;
+        }
+
+        @Override
+        public boolean isCredentialsNonExpired() {
+            return true;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return true;
+        }
+    }
+  learner_created: true
 - name: src/account/AccauntRestController.java
   visible: true
   text: |
@@ -1078,6 +1075,12 @@ files:
 
 
     }
+  learner_created: true
+- name: src/account/Payment.java
+  visible: true
+  learner_created: true
+- name: src/account/dto/PaymentResponseDto.java
+  visible: true
   learner_created: true
 feedback_link: https://hyperskill.org/projects/217/stages/1089/implement#comment
 status: Unchecked
