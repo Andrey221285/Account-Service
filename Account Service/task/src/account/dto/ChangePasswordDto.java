@@ -1,4 +1,4 @@
-package account;
+package account.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -12,7 +12,8 @@ import javax.validation.constraints.Size;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-class ChangePassword{
+public
+class ChangePasswordDto {
 
     @NotBlank
    // @Size(min = 12,message = "The password length must be at leat 12 chars!")

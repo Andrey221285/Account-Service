@@ -1,4 +1,4 @@
-package account;
+package account.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;

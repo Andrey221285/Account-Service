@@ -1,6 +1,12 @@
-package account;
+package account.controller;
 
+import account.UserExistException;
+import account.dto.ChangePasswordDto;
 import account.dto.PaymentResponseDto;
+import account.entity.Payment;
+import account.entity.User;
+import account.repository.PaymentRepository;
+import account.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -54,20 +60,6 @@ public class AccauntRestController {
         throw new UserExistException();
     }
 
-    public static void main(String[] args) {
-        String date = "01-2021";
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-yyyy");
-        DateTimeFormatter formatter2 = DateTimeFormatter.ofPattern("MMMM-yyyy");
-        YearMonth ym = YearMonth.parse(date, formatter);
-        System.out.println(ym.format(formatter2));
-        System.out.println(ym.getMonth());
-        System.out.println(ym.getYear());
-
-
-        long salary = 123456;
-        System.out.println(salaryToString(salary));
-    }
-
     @GetMapping("api/empl/payment")
     public ResponseEntity<?> getPayment(@AuthenticationPrincipal UserDetails details,@RequestParam(required = false) String period) {
         if (details != null) {
@@ -111,20 +103,20 @@ public class AccauntRestController {
     }
 
     @PostMapping("api/auth/changepass")
-    public ResponseEntity<?> changePassword(@AuthenticationPrincipal UserDetails details, @Valid @RequestBody ChangePassword changePassword) {
+    public ResponseEntity<?> changePassword(@AuthenticationPrincipal UserDetails details, @Valid @RequestBody ChangePasswordDto changePasswordDto) {
         if (details != null) {
-            if (changePassword.getPassword().length() < 12) {
+            if (changePasswordDto.getPassword().length() < 12) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password length must be 12 chars minimum!");
             }
-            System.out.println("password = " + changePassword.getPassword());
-            if (hackedPassword.contains(changePassword.getPassword())) {
+            System.out.println("password = " + changePasswordDto.getPassword());
+            if (hackedPassword.contains(changePasswordDto.getPassword())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The password is in the hacker's database!");
             }
             User user = userRepository.findByEmailIgnoreCase(details.getUsername());
-            if (encoder.matches(changePassword.getPassword(), user.getPassword())) {
+            if (encoder.matches(changePasswordDto.getPassword(), user.getPassword())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The passwords must be different!");
             }
-            user.setPassword(encoder.encode(changePassword.getPassword()));
+            user.setPassword(encoder.encode(changePasswordDto.getPassword()));
             userRepository.save(user);
             HashMap<String, String> map = new HashMap<>();
             map.put("email", user.getEmail().toLowerCase());
