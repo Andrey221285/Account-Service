@@ -23,24 +23,24 @@ public class User {
     private Long id;
     @Column
     @NotBlank
-    String name;
+    private String name;
 
     @Column
     @NotBlank
-    String lastname;
+    private String lastname;
 
     @Column
     @NotBlank
     @Email
     @Size(min = 8)
     @Pattern(regexp = ".+@acme.com")
-    String email;
+    private String email;
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column
     @NotBlank
     //@Size(min = 12,message = "The password length must be at leat 12 chars!")
-    String password;
+    private String password;
 
 
 }

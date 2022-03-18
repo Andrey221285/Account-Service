@@ -18,14 +18,14 @@ public class Payment {
     private Long id;
 
     @Column
-    String employee;
+    private String employee;
 
     @Column
-    String  period;
+    private String  period;
 
 //    @Min(value = 0)
     @Column
-    Long salary;
+    private Long salary;
 
     @ManyToOne
     @JoinColumn(name="user_id", nullable=false)
