@@ -41,8 +41,10 @@ public class WebSecurityConfigurerImpl extends WebSecurityConfigurerAdapter {
                 .csrf().disable().headers().frameOptions().disable() // for Postman, the H2 console
                 .and()
                 .authorizeRequests() // manage access
-                .antMatchers(HttpMethod.POST, "api/acct/payments","/api/signup").permitAll()
-                .antMatchers(HttpMethod.PUT, "api/acct/payments").permitAll()
+                .mvcMatchers("/api/signup").permitAll()
+                .mvcMatchers("api/auth/changepass").authenticated()
+                .mvcMatchers("api/admin/user/**").hasRole("ADMINISTRATOR")
+                .mvcMatchers( "api/acct/payments").authenticated()
                 // other matchers
                 .and()
                 .sessionManagement()

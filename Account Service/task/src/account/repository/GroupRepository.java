@@ -9,4 +9,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface GroupRepository  extends CrudRepository<Group, Long> {
+
+    public Group findByName(String name);
 }

@@ -3,8 +3,11 @@ package account.controller;
 import account.UserExistException;
 import account.dto.ChangePasswordDto;
 import account.dto.PaymentResponseDto;
+import account.dto.UserDto;
+import account.entity.Group;
 import account.entity.Payment;
 import account.entity.User;
+import account.repository.GroupRepository;
 import account.repository.PaymentRepository;
 import account.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +33,8 @@ public class AccauntRestController {
     @Autowired
     PaymentRepository paymentRepository;
     @Autowired
+    GroupRepository groupRepository;
+    @Autowired
     PasswordEncoder encoder;
 
     private HashSet<String> hackedPassword = new HashSet<>(Arrays.asList("PasswordForJanuary", "PasswordForFebruary", "PasswordForMarch", "PasswordForApril",
@@ -52,8 +57,16 @@ public class AccauntRestController {
         User userOld = userRepository.findByEmailIgnoreCase(user.getEmail());
         if (userOld == null) {
             user.setPassword(encoder.encode(user.getPassword()));
+            Set<Group> g = new HashSet<>();
+            if(userRepository.count()==0){
+                g.add( groupRepository.findByName("ROLE_ADMINISTRATOR"));
+            } else {
+                g.add( groupRepository.findByName("ROLE_USER"));
+            }
+            user.setRoles(g);
             userRepository.save(user);
-            return new ResponseEntity<>(user, HttpStatus.OK);
+
+            return new ResponseEntity<>(new UserDto(user), HttpStatus.OK);
         }
 
         throw new UserExistException();

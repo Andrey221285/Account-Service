@@ -25,6 +25,8 @@ public class Group {
     @Column(unique = true, nullable = false)
     private String name;
 
-//    @ManyToMany(mappedBy = "userGroups")
+//    @OneToMany
+//    @JoinColumn(name="group_id", nullable=false)
 //    private Set<User> users;
+
 }

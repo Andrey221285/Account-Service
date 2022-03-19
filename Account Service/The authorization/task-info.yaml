@@ -1,13 +1,5 @@
 type: edu
 files:
-- name: src/resources/application.properties
-  visible: true
-  text: |-
-    server.port=28852
-    management.endpoints.web.exposure.include=*
-    management.endpoint.shutdown.enabled=true
-    spring.jackson.serialization.INDENT_OUTPUT=true
-  learner_created: false
 - name: test/AccountServiceTest.java
   visible: false
   text: |-
@@ -891,6 +883,149 @@ files:
 
     }
   learner_created: false
+- name: build.gradle
+  visible: true
+  text: |-
+    plugins {
+        id 'java'
+        id 'org.springframework.boot' version '2.3.1.RELEASE'
+        id 'io.spring.dependency-management' version '1.0.9.RELEASE'
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    sourceSets.main.resources.srcDirs = ["src/resources"]
+
+    dependencies {
+        implementation 'org.springframework.boot:spring-boot-starter'
+        implementation 'org.springframework.boot:spring-boot-starter-actuator'
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+        implementation group: 'org.hibernate', name: 'hibernate-validator', version: '6.1.0.Final'
+    }
+  learner_created: false
+- name: src/account/dto/ChangePasswordDto.java
+  visible: true
+  text: |
+    package account;
+
+    import com.fasterxml.jackson.annotation.JsonProperty;
+    import lombok.AllArgsConstructor;
+    import lombok.Data;
+    import lombok.NoArgsConstructor;
+    import org.springframework.stereotype.Component;
+
+    import javax.validation.constraints.NotBlank;
+    import javax.validation.constraints.Size;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    class ChangePassword{
+
+        @NotBlank
+       // @Size(min = 12,message = "The password length must be at leat 12 chars!")
+        @JsonProperty("new_password")
+        private String password;
+    }
+  learner_created: true
+- name: src/account/AccountServiceApplication.java
+  visible: true
+  text: |-
+    package account;
+
+    import org.springframework.boot.SpringApplication;
+    import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+    @SpringBootApplication
+    public class AccountServiceApplication {
+
+        public static void main(String[] args) {
+            SpringApplication.run(AccountServiceApplication.class, args);
+        }
+
+    }
+  learner_created: false
+- name: src/account/UserDetailsServiceImpl.java
+  visible: true
+  text: |
+    package account;
+
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.security.core.userdetails.UserDetails;
+    import org.springframework.security.core.userdetails.UserDetailsService;
+    import org.springframework.security.core.userdetails.UsernameNotFoundException;
+    import org.springframework.stereotype.Service;
+
+    @Service
+    public class UserDetailsServiceImpl  implements UserDetailsService {
+        @Autowired
+        UserRepository userRepository;
+
+        @Override
+        public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+            User user = userRepository.findByEmailIgnoreCase(username);
+            if (user == null){
+                throw new UsernameNotFoundException("Not found: " + username);
+            }
+            return new UserDetailsImpl(user);
+        }
+    }
+  learner_created: true
+- name: src/resources/application.properties
+  visible: true
+  text: |-
+    server.port=28852
+    management.endpoints.web.exposure.include=*
+    management.endpoint.shutdown.enabled=true
+    spring.jackson.serialization.INDENT_OUTPUT=true
+  learner_created: false
+- name: src/account/controller/AdminController.java
+  visible: true
+  learner_created: true
+- name: src/account/repository/UserRepository.java
+  visible: true
+  text: |
+    package account;
+
+    import org.springframework.data.repository.CrudRepository;
+    import org.springframework.stereotype.Component;
+
+
+    @Component
+    public interface UserRepository extends CrudRepository<User, Long> {
+        User findByEmailIgnoreCase(String name);
+
+
+    }
+  learner_created: true
+- name: src/account/entity/Group.java
+  visible: true
+  learner_created: true
+- name: src/account/RestAuthenticationEntryPoint.java
+  visible: true
+  text: |
+    package account;
+
+    import org.springframework.security.core.AuthenticationException;
+    import org.springframework.security.web.AuthenticationEntryPoint;
+    import org.springframework.stereotype.Component;
+
+    import javax.servlet.ServletException;
+    import javax.servlet.http.HttpServletRequest;
+    import javax.servlet.http.HttpServletResponse;
+    import java.io.IOException;
+
+    @Component
+    public class RestAuthenticationEntryPoint  implements AuthenticationEntryPoint {
+
+        @Override
+        public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, authException.getMessage());
+        }
+    }
+  learner_created: true
 - name: src/account/dto/PaymentResponseDto.java
   visible: true
   text: |
@@ -938,156 +1073,6 @@ files:
 
         public String getSalary() {
             return salary;
-        }
-    }
-  learner_created: true
-- name: build.gradle
-  visible: true
-  text: |-
-    plugins {
-        id 'java'
-        id 'org.springframework.boot' version '2.3.1.RELEASE'
-        id 'io.spring.dependency-management' version '1.0.9.RELEASE'
-    }
-
-    repositories {
-        mavenCentral()
-    }
-
-    sourceSets.main.resources.srcDirs = ["src/resources"]
-
-    dependencies {
-        implementation 'org.springframework.boot:spring-boot-starter'
-        implementation 'org.springframework.boot:spring-boot-starter-actuator'
-        implementation 'org.springframework.boot:spring-boot-starter-web'
-        implementation group: 'org.hibernate', name: 'hibernate-validator', version: '6.1.0.Final'
-    }
-  learner_created: false
-- name: src/account/UserDetailsServiceImpl.java
-  visible: true
-  text: |
-    package account;
-
-    import org.springframework.beans.factory.annotation.Autowired;
-    import org.springframework.security.core.userdetails.UserDetails;
-    import org.springframework.security.core.userdetails.UserDetailsService;
-    import org.springframework.security.core.userdetails.UsernameNotFoundException;
-    import org.springframework.stereotype.Service;
-
-    @Service
-    public class UserDetailsServiceImpl  implements UserDetailsService {
-        @Autowired
-        UserRepository userRepository;
-
-        @Override
-        public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-            User user = userRepository.findByEmailIgnoreCase(username);
-            if (user == null){
-                throw new UsernameNotFoundException("Not found: " + username);
-            }
-            return new UserDetailsImpl(user);
-        }
-    }
-  learner_created: true
-- name: src/account/WebSecurityConfigurerImpl.java
-  visible: true
-  text: |
-    package account;
-
-    import org.springframework.beans.factory.annotation.Autowired;
-    import org.springframework.context.annotation.Bean;
-    import org.springframework.http.HttpMethod;
-    import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-    import org.springframework.security.config.annotation.web.WebSecurityConfigurer;
-    import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-    import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-    import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-    import org.springframework.security.config.http.SessionCreationPolicy;
-    import org.springframework.security.core.userdetails.UserDetailsService;
-    import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-    import org.springframework.security.crypto.password.PasswordEncoder;
-
-    @EnableWebSecurity
-    public class WebSecurityConfigurerImpl extends WebSecurityConfigurerAdapter {
-
-        @Autowired
-        RestAuthenticationEntryPoint restAuthenticationEntryPoint;
-
-        @Autowired
-        UserDetailsService userDetailsService;
-
-        @Override
-        protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-            auth
-                    .userDetailsService(userDetailsService) // user store 1
-                    .passwordEncoder(getEncoder());
-
-    //        auth
-    //                .inMemoryAuthentication() // user store 2
-    //                .withUser("Admin").password("hardcoded").roles("USER")
-    //                .and().passwordEncoder(NoOpPasswordEncoder.getInstance());
-        }
-
-        public void configure(HttpSecurity http) throws Exception {
-            http.httpBasic()
-                    .authenticationEntryPoint(restAuthenticationEntryPoint) // Handle auth error
-                    .and()
-                    .csrf().disable().headers().frameOptions().disable() // for Postman, the H2 console
-                    .and()
-                    .authorizeRequests() // manage access
-                    .antMatchers(HttpMethod.POST, "api/acct/payments","/api/signup").permitAll()
-                    .antMatchers(HttpMethod.PUT, "api/acct/payments").permitAll()
-                    // other matchers
-                    .and()
-                    .sessionManagement()
-                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS); // no session
-        }
-
-        @Bean
-        public PasswordEncoder getEncoder() {
-            return new BCryptPasswordEncoder(13);
-        }
-    }
-  learner_created: true
-- name: src/account/controller/AdminController.java
-  visible: true
-  learner_created: true
-- name: src/account/repository/UserRepository.java
-  visible: true
-  text: |
-    package account;
-
-    import org.springframework.data.repository.CrudRepository;
-    import org.springframework.stereotype.Component;
-
-
-    @Component
-    public interface UserRepository extends CrudRepository<User, Long> {
-        User findByEmailIgnoreCase(String name);
-
-
-    }
-  learner_created: true
-- name: src/account/RestAuthenticationEntryPoint.java
-  visible: true
-  text: |
-    package account;
-
-    import org.springframework.security.core.AuthenticationException;
-    import org.springframework.security.web.AuthenticationEntryPoint;
-    import org.springframework.stereotype.Component;
-
-    import javax.servlet.ServletException;
-    import javax.servlet.http.HttpServletRequest;
-    import javax.servlet.http.HttpServletResponse;
-    import java.io.IOException;
-
-    @Component
-    public class RestAuthenticationEntryPoint  implements AuthenticationEntryPoint {
-
-        @Override
-        public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, authException.getMessage());
         }
     }
   learner_created: true
@@ -1425,31 +1410,6 @@ files:
 - name: src/account/component/DataLoader.java
   visible: true
   learner_created: true
-- name: src/account/dto/ChangePasswordDto.java
-  visible: true
-  text: |
-    package account;
-
-    import com.fasterxml.jackson.annotation.JsonProperty;
-    import lombok.AllArgsConstructor;
-    import lombok.Data;
-    import lombok.NoArgsConstructor;
-    import org.springframework.stereotype.Component;
-
-    import javax.validation.constraints.NotBlank;
-    import javax.validation.constraints.Size;
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    class ChangePassword{
-
-        @NotBlank
-       // @Size(min = 12,message = "The password length must be at leat 12 chars!")
-        @JsonProperty("new_password")
-        private String password;
-    }
-  learner_created: true
 - name: src/account/repository/PaymentRepository.java
   visible: true
   text: |
@@ -1508,24 +1468,70 @@ files:
         private User user;
     }
   learner_created: true
-- name: src/account/AccountServiceApplication.java
+- name: src/account/WebSecurityConfigurerImpl.java
   visible: true
-  text: |-
+  text: |
     package account;
 
-    import org.springframework.boot.SpringApplication;
-    import org.springframework.boot.autoconfigure.SpringBootApplication;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.context.annotation.Bean;
+    import org.springframework.http.HttpMethod;
+    import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+    import org.springframework.security.config.annotation.web.WebSecurityConfigurer;
+    import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+    import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+    import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+    import org.springframework.security.config.http.SessionCreationPolicy;
+    import org.springframework.security.core.userdetails.UserDetailsService;
+    import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+    import org.springframework.security.crypto.password.PasswordEncoder;
 
-    @SpringBootApplication
-    public class AccountServiceApplication {
+    @EnableWebSecurity
+    public class WebSecurityConfigurerImpl extends WebSecurityConfigurerAdapter {
 
-        public static void main(String[] args) {
-            SpringApplication.run(AccountServiceApplication.class, args);
+        @Autowired
+        RestAuthenticationEntryPoint restAuthenticationEntryPoint;
+
+        @Autowired
+        UserDetailsService userDetailsService;
+
+        @Override
+        protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+            auth
+                    .userDetailsService(userDetailsService) // user store 1
+                    .passwordEncoder(getEncoder());
+
+    //        auth
+    //                .inMemoryAuthentication() // user store 2
+    //                .withUser("Admin").password("hardcoded").roles("USER")
+    //                .and().passwordEncoder(NoOpPasswordEncoder.getInstance());
         }
 
+        public void configure(HttpSecurity http) throws Exception {
+            http.httpBasic()
+                    .authenticationEntryPoint(restAuthenticationEntryPoint) // Handle auth error
+                    .and()
+                    .csrf().disable().headers().frameOptions().disable() // for Postman, the H2 console
+                    .and()
+                    .authorizeRequests() // manage access
+                    .antMatchers(HttpMethod.POST, "api/acct/payments","/api/signup").permitAll()
+                    .antMatchers(HttpMethod.PUT, "api/acct/payments").permitAll()
+                    // other matchers
+                    .and()
+                    .sessionManagement()
+                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS); // no session
+        }
+
+        @Bean
+        public PasswordEncoder getEncoder() {
+            return new BCryptPasswordEncoder(13);
+        }
     }
-  learner_created: false
-- name: src/account/entity/Group.java
+  learner_created: true
+- name: src/account/dto/UserDto.java
+  visible: true
+  learner_created: true
+- name: src/CustomAccessDeniedHandler.java
   visible: true
   learner_created: true
 feedback_link: https://hyperskill.org/projects/217/stages/1090/implement#comment

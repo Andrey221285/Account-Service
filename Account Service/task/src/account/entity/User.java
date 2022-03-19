@@ -10,6 +10,8 @@ import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
+import java.util.Set;
+import java.util.TreeSet;
 
 @Data
 @NoArgsConstructor
@@ -19,7 +21,7 @@ public class User {
 
     //@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Id
-    @GeneratedValue(strategy = GenerationType.TABLE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column
     @NotBlank
@@ -42,5 +44,7 @@ public class User {
     //@Size(min = 12,message = "The password length must be at leat 12 chars!")
     private String password;
 
-
+    @ManyToMany(fetch = FetchType.EAGER)
+    //@JoinColumn(name="group_id", nullable=false)
+    private Set<Group> roles;
 }
