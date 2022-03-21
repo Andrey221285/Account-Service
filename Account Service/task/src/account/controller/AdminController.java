@@ -1,6 +1,9 @@
 package account.controller;
 
+import account.UserNotFoundException;
+import account.dto.AdminUpdateUserDto;
 import account.dto.UserDto;
+import account.entity.Group;
 import account.entity.User;
 import account.repository.GroupRepository;
 import account.repository.UserRepository;
@@ -51,10 +54,52 @@ public class AdminController {
         throw new ResponseStatusException(HttpStatus.NOT_FOUND,"User not found!");
     }
     @PutMapping("api/admin/user/role")
-    public ResponseEntity<?> updateUserRole(@AuthenticationPrincipal UserDetails details) {
+    public ResponseEntity<?> updateUserRole(@AuthenticationPrincipal UserDetails details,@RequestBody AdminUpdateUserDto updateUserDto) {
+        User user = userRepository.findByEmailIgnoreCase(updateUserDto.getUser());
+        String operation = updateUserDto.getOperation();
+        if (user != null){
+            Group group = groupRepository.findByName("ROLE_" + updateUserDto.getRole());
+            if (group == null){
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found!");
+            }
 
-        return null;
+            if (operation.equals("GRANT")){
+                boolean isAdmin = false;
+                for (var role : user.getRoles()) {
+                    if (role.getName().equals("ROLE_ADMINISTRATOR")) {
+                        isAdmin = true;
+                        break;
+                    }
+                }
+                if (!isAdmin && group.getName().equals("ROLE_ADMINISTRATOR")){
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The user cannot combine administrative and business roles!");
+                }
+                if (isAdmin && (group.getName().equals("ROLE_USER") || group.getName().equals("ROLE_ACCOUNTANT"))){
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The user cannot combine administrative and business roles!");
+                }
+
+                user.getRoles().add(group);
+                userRepository.save(user);
+                return new ResponseEntity<>(new UserDto(user), HttpStatus.OK);
+            } else if (operation.equals("REMOVE")){
+                if (group.getName().equals("ROLE_ADMINISTRATOR")){
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can't remove ADMINISTRATOR role!");
+                }
+                if (!user.getRoles().contains(group)){
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The user does not have a role!");
+                }
+                if (user.getRoles().size() == 1){
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The user must have at least one role!");
+                }
+                user.getRoles().remove(group);
+                userRepository.save(user);
+                return new ResponseEntity<>(new UserDto(user), HttpStatus.OK);
+            } else {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "unknown operation:" + operation);
+            }
+        } else {
+            throw new UserNotFoundException();
+        }
     }
-
 
 }

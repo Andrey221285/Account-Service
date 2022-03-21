@@ -44,11 +44,14 @@ public class WebSecurityConfigurerImpl extends WebSecurityConfigurerAdapter {
                 .mvcMatchers("/api/signup").permitAll()
                 .mvcMatchers("api/auth/changepass").authenticated()
                 .mvcMatchers("api/admin/user/**").hasRole("ADMINISTRATOR")
-                .mvcMatchers( "api/acct/payments").authenticated()
+                .mvcMatchers( "api/acct/payments").hasRole("ACCOUNTANT")
+                .mvcMatchers( "api/empl/payment").hasAnyRole("ACCOUNTANT", "USER")
                 // other matchers
                 .and()
                 .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS); // no session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+        .exceptionHandling().accessDeniedHandler(new CustomAccessDeniedHandler());
     }
 
     @Bean
