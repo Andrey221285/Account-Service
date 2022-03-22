@@ -37,7 +37,7 @@ public class AdminController {
 
         return new ResponseEntity<>(userDtos, HttpStatus.OK);
     }
-    @DeleteMapping(value ={"api/admin/user/","api/admin/user/{userEmail}"} )
+    @DeleteMapping(value ={"api/admin/user","api/admin/user/{userEmail}"} )
     public ResponseEntity<?> deleteUser(@AuthenticationPrincipal UserDetails details,@PathVariable String userEmail) {
         User user = userRepository.findByEmailIgnoreCase(userEmail);
         if (user != null){

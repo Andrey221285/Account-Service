@@ -43,7 +43,7 @@ public class WebSecurityConfigurerImpl extends WebSecurityConfigurerAdapter {
                 .authorizeRequests() // manage access
                 .mvcMatchers("/api/signup").permitAll()
                 .mvcMatchers("api/auth/changepass").authenticated()
-                .mvcMatchers("api/admin/user/**").hasRole("ADMINISTRATOR")
+                .mvcMatchers("api/admin/user","api/admin/user/**").hasRole("ADMINISTRATOR")
                 .mvcMatchers( "api/acct/payments").hasRole("ACCOUNTANT")
                 .mvcMatchers( "api/empl/payment").hasAnyRole("ACCOUNTANT", "USER")
                 // other matchers
