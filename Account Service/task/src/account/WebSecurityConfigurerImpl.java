@@ -1,6 +1,8 @@
 package account;
 
+import account.component.AuthenticationFailureListener;
 import account.component.RestAuthenticationEntryPoint;
+import account.repository.AuditRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -21,6 +23,10 @@ public class WebSecurityConfigurerImpl extends WebSecurityConfigurerAdapter {
     @Autowired
     UserDetailsService userDetailsService;
 
+    @Autowired AuditRepository auditRepository;
+
+    @Autowired CustomAuthenticationFailureHandler customAuthenticationFailureHandler;
+
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth
@@ -34,7 +40,7 @@ public class WebSecurityConfigurerImpl extends WebSecurityConfigurerAdapter {
     }
 
     public void configure(HttpSecurity http) throws Exception {
-        http.httpBasic()
+        http.httpBasic().failureHandler(customAuthenticationFailureHandler)
                 .authenticationEntryPoint(restAuthenticationEntryPoint) // Handle auth error
                 .and()
                 .csrf().disable().headers().frameOptions().disable() // for Postman, the H2 console
@@ -51,8 +57,11 @@ public class WebSecurityConfigurerImpl extends WebSecurityConfigurerAdapter {
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-        .exceptionHandling().accessDeniedHandler(new CustomAccessDeniedHandler());
+        .exceptionHandling().accessDeniedHandler(new CustomAccessDeniedHandler(auditRepository))
+        ;
     }
+
+
 
     @Bean
     public PasswordEncoder getEncoder() {

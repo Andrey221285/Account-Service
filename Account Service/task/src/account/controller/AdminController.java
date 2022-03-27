@@ -1,11 +1,14 @@
 package account.controller;
 
+import account.AUDIT_EVENTS;
 import account.dto.AdminChangeAccessDto;
+import account.entity.Audit;
 import account.exceptions.UserNotFoundException;
 import account.dto.AdminUpdateUserDto;
 import account.dto.UserDto;
 import account.entity.Group;
 import account.entity.User;
+import account.repository.AuditRepository;
 import account.repository.GroupRepository;
 import account.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +32,8 @@ public class AdminController {
 
     @Autowired
     private GroupRepository groupRepository;
+    @Autowired
+    private AuditRepository auditRepository;
 
     @GetMapping("api/admin/user")
     public ResponseEntity<?> getAllUsers(@AuthenticationPrincipal UserDetails details) {
@@ -48,6 +53,14 @@ public class AdminController {
             }
 
             userRepository.delete(user);
+
+            Audit audit = new Audit();
+            audit.setAction(AUDIT_EVENTS.DELETE_USER.name());
+            audit.setSubject(details.getUsername());
+            audit.setObject(user.getEmail());
+            audit.setPath("api/admin/user");
+            auditRepository.save(audit);
+
             Map<String, String> map = new HashMap<>();
             map.put("user", user.getEmail().toLowerCase());
             map.put("status", "Deleted successfully!");
@@ -83,8 +96,17 @@ public class AdminController {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The user cannot combine administrative and business roles!");
                 }
 
+
+
                 user.getRoles().add(group);
                 userRepository.save(user);
+                Audit audit = new Audit();
+                audit.setAction(AUDIT_EVENTS.GRANT_ROLE.name());
+                audit.setSubject(details.getUsername().toLowerCase());
+                audit.setObject("Grant role " + updateUserDto.getRole() +" to " +user.getEmail().toLowerCase());
+                audit.setPath("api/admin/user/role");
+                auditRepository.save(audit);
+
                 return new ResponseEntity<>(new UserDto(user), HttpStatus.OK);
             } else if (operation.equals("REMOVE")) {
                 if (group.getName().equals("ROLE_ADMINISTRATOR")) {
@@ -98,6 +120,13 @@ public class AdminController {
                 }
                 user.getRoles().remove(group);
                 userRepository.save(user);
+                Audit audit = new Audit();
+                audit.setAction(AUDIT_EVENTS.REMOVE_ROLE.name());
+                audit.setObject(details.getUsername().toLowerCase());
+                audit.setObject("Remove role " + updateUserDto.getRole() +" from " +user.getEmail().toLowerCase());
+                audit.setPath("api/admin/user/role");
+                auditRepository.save(audit);
+
                 return new ResponseEntity<>(new UserDto(user), HttpStatus.OK);
             } else {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "unknown operation:" + operation);
@@ -108,18 +137,30 @@ public class AdminController {
     }
 
     @PutMapping("api/admin/user/access")
-    public ResponseEntity<?> changeUserAccess(@RequestBody @Valid AdminChangeAccessDto changeAccess) {
+    public ResponseEntity<?> changeUserAccess(@AuthenticationPrincipal UserDetails details, @RequestBody @Valid AdminChangeAccessDto changeAccess) {
         User user = userRepository.findByEmailIgnoreCase(changeAccess.getUser());
         if (user != null) {
+            Audit audit = new Audit();
+            audit.setSubject(details.getUsername());
+            audit.setPath("api/admin/user/access");
+
             if (changeAccess.getOperation().equals("LOCK")) {
                 if (user.getRoles().contains(groupRepository.findByName("ROLE_ADMINISTRATOR"))) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can't lock the ADMINISTRATOR!");
                 }
                 user.lockUsuer();
+                audit.setAction(AUDIT_EVENTS.LOCK_USER.name());
+                audit.setObject("Lock user " + user.getEmail().toLowerCase());
+
             } else if (changeAccess.getOperation().equals("UNLOCK")){
                 user.unlockUser();
+                audit.setAction(AUDIT_EVENTS.UNLOCK_USER.name());
+                audit.setObject("Unlock user " + user.getEmail().toLowerCase());
             }
+
             userRepository.save(user);
+
+            auditRepository.save(audit);
             Map<String, String> map = new HashMap<>();
 
             map.put("status", "User " + user.getEmail().toLowerCase()

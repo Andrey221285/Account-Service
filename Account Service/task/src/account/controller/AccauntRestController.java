@@ -1,5 +1,6 @@
 package account.controller;
 
+import account.AUDIT_EVENTS;
 import account.entity.Audit;
 import account.exceptions.UserExistException;
 import account.dto.ChangePasswordDto;
@@ -69,6 +70,13 @@ public class AccauntRestController {
             }
             user.setRoles(g);
             userRepository.save(user);
+            Audit audit = new Audit();
+            audit.setAction(AUDIT_EVENTS.CREATE_USER.name());
+            audit.setPath("/api/auth/signup");
+            audit.setSubject("Anonymous");
+            audit.setObject(user.getEmail().toLowerCase());
+            auditRepository.save(audit);
+
 
             return new ResponseEntity<>(new UserDto(user), HttpStatus.OK);
         }
@@ -134,6 +142,14 @@ public class AccauntRestController {
             }
             user.setPassword(encoder.encode(changePasswordDto.getPassword()));
             userRepository.save(user);
+            Audit audit = new Audit();
+            audit.setAction(AUDIT_EVENTS.CHANGE_PASSWORD.name());
+            audit.setObject(user.getEmail().toLowerCase());
+            audit.setSubject(user.getEmail().toLowerCase());
+            audit.setPath("api/auth/changepass");
+            auditRepository.save(audit);
+
+
             HashMap<String, String> map = new HashMap<>();
             map.put("email", user.getEmail().toLowerCase());
             map.put("status", "The password has been updated successfully");

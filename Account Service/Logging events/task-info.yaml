@@ -1772,6 +1772,12 @@ files:
 - name: src/account/repository/AuditRepository.java
   visible: true
   learner_created: true
+- name: src/account/AUDIT_EVENTS.java
+  visible: true
+  learner_created: true
+- name: src/account/CustomAuthenticationFailureHandler.java
+  visible: true
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/217/stages/1091/implement#comment
 status: Unchecked
 record: -1
