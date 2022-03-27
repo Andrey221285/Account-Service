@@ -1,12 +1,14 @@
 package account.controller;
 
-import account.UserExistException;
+import account.entity.Audit;
+import account.exceptions.UserExistException;
 import account.dto.ChangePasswordDto;
 import account.dto.PaymentResponseDto;
 import account.dto.UserDto;
 import account.entity.Group;
 import account.entity.Payment;
 import account.entity.User;
+import account.repository.AuditRepository;
 import account.repository.GroupRepository;
 import account.repository.PaymentRepository;
 import account.repository.UserRepository;
@@ -36,6 +38,8 @@ public class AccauntRestController {
     GroupRepository groupRepository;
     @Autowired
     PasswordEncoder encoder;
+    @Autowired
+    AuditRepository auditRepository;
 
     private HashSet<String> hackedPassword = new HashSet<>(Arrays.asList("PasswordForJanuary", "PasswordForFebruary", "PasswordForMarch", "PasswordForApril",
             "PasswordForMay", "PasswordForJune", "PasswordForJuly", "PasswordForAugust",
@@ -207,6 +211,11 @@ public class AccauntRestController {
         HashMap<String, String> m = new HashMap<>();
         m.put("status", "Updated successfully!");
         return new ResponseEntity<>(m, HttpStatus.OK);
+    }
+
+    @GetMapping("api/security/events")
+    public ResponseEntity<?> getAuditEvents(){
+        return new ResponseEntity<>(auditRepository.findAll(),HttpStatus.OK);
     }
 
 

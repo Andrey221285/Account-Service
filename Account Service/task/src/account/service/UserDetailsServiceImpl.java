@@ -1,5 +1,6 @@
-package account;
+package account.service;
 
+import account.UserDetailsImpl;
 import account.entity.User;
 import account.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;

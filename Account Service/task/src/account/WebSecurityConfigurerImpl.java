@@ -1,10 +1,9 @@
 package account;
 
+import account.component.RestAuthenticationEntryPoint;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.config.annotation.web.WebSecurityConfigurer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -46,6 +45,7 @@ public class WebSecurityConfigurerImpl extends WebSecurityConfigurerAdapter {
                 .mvcMatchers("api/admin/user","api/admin/user/**").hasRole("ADMINISTRATOR")
                 .mvcMatchers( "api/acct/payments").hasRole("ACCOUNTANT")
                 .mvcMatchers( "api/empl/payment").hasAnyRole("ACCOUNTANT", "USER")
+                .mvcMatchers( "api/security/events").hasAnyRole("AUDITOR")
                 // other matchers
                 .and()
                 .sessionManagement()

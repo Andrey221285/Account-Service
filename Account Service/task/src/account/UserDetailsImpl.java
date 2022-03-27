@@ -8,15 +8,15 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class UserDetailsImpl implements UserDetails {
     private User user;
     private final List<GrantedAuthority> rolesAndAuthorities;
+
     public UserDetailsImpl(User user) {
         this.user = user;
-        rolesAndAuthorities=new ArrayList<>();
-        user.getRoles().forEach(t->rolesAndAuthorities.add(new SimpleGrantedAuthority(t.getName())));
+        rolesAndAuthorities = new ArrayList<>();
+        user.getRoles().forEach(t -> rolesAndAuthorities.add(new SimpleGrantedAuthority(t.getName())));
     }
 
     @Override
@@ -41,7 +41,7 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return user.getLogin_failure() <= 5;
     }
 
     @Override
