@@ -1,5 +1,7 @@
 package account.component;
 
+import account.repository.AuditRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
@@ -11,6 +13,9 @@ import java.io.IOException;
 
 @Component
 public class RestAuthenticationEntryPoint  implements AuthenticationEntryPoint {
+    @Autowired
+    AuditRepository auditRepository;
+
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {

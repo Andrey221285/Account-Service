@@ -61,6 +61,9 @@ public class User {
         login_failure = 0;
     }
     public void lockUsuer(){
-        login_failure = 6;
+        login_failure = 5;
+    }
+    public boolean nonLocked(){
+        return login_failure < 5;
     }
 }

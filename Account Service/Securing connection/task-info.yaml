@@ -137,6 +137,1344 @@ files:
       };
     }
   learner_created: false
+- name: src/account/component/RestAuthenticationEntryPoint.java
+  visible: true
+  text: |
+    package account.component;
+
+    import account.repository.AuditRepository;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.security.core.AuthenticationException;
+    import org.springframework.security.web.AuthenticationEntryPoint;
+    import org.springframework.stereotype.Component;
+
+    import javax.servlet.ServletException;
+    import javax.servlet.http.HttpServletRequest;
+    import javax.servlet.http.HttpServletResponse;
+    import java.io.IOException;
+
+    @Component
+    public class RestAuthenticationEntryPoint  implements AuthenticationEntryPoint {
+        @Autowired
+        AuditRepository auditRepository;
+
+
+        @Override
+        public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, authException.getMessage());
+        }
+    }
+  learner_created: true
+- name: src/account/dto/ChangePasswordDto.java
+  visible: true
+  text: |
+    package account.dto;
+
+    import com.fasterxml.jackson.annotation.JsonProperty;
+    import lombok.AllArgsConstructor;
+    import lombok.Data;
+    import lombok.NoArgsConstructor;
+    import org.springframework.stereotype.Component;
+
+    import javax.validation.constraints.NotBlank;
+    import javax.validation.constraints.Size;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public
+    class ChangePasswordDto {
+
+        @NotBlank
+       // @Size(min = 12,message = "The password length must be at leat 12 chars!")
+        @JsonProperty("new_password")
+        private String password;
+    }
+  learner_created: true
+- name: src/account/CustomAccessDeniedHandler.java
+  visible: true
+  text: |
+    package account;
+
+    import account.entity.Audit;
+    import account.repository.AuditRepository;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.http.HttpStatus;
+    import org.springframework.security.access.AccessDeniedException;
+    import org.springframework.security.core.Authentication;
+    import org.springframework.security.core.context.SecurityContextHolder;
+    import org.springframework.security.web.access.AccessDeniedHandler;
+    import org.springframework.stereotype.Component;
+    import org.springframework.web.server.ResponseStatusException;
+
+    import javax.servlet.ServletException;
+    import javax.servlet.http.HttpServletRequest;
+    import javax.servlet.http.HttpServletResponse;
+    import java.io.IOException;
+
+    public class CustomAccessDeniedHandler implements AccessDeniedHandler {
+        private AuditRepository auditRepository;
+
+        public CustomAccessDeniedHandler(AuditRepository auditRepository) {
+            this.auditRepository = auditRepository;
+        }
+
+        @Override
+        public void handle(
+                HttpServletRequest request,
+                HttpServletResponse response,
+                AccessDeniedException exc) throws IOException, ServletException {
+            Authentication auth
+                    = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null) {
+                System.out.println("User: " + auth.getName()
+                        + " attempted to access the protected URL: "
+                        + request.getRequestURI());
+                Audit audit = new Audit();
+                audit.setAction(AUDIT_EVENTS.ACCESS_DENIED.name());
+                audit.setSubject(auth.getName().toLowerCase());
+                audit.setObject(request.getRequestURI());
+                audit.setPath(request.getRequestURI());
+                auditRepository.save(audit);
+            }
+
+
+            response.sendError(HttpStatus.FORBIDDEN.value(), "Access Denied!");
+        }
+    }
+  learner_created: true
+- name: src/account/service/UserDetailsServiceImpl.java
+  visible: true
+  text: |
+    package account.service;
+
+    import account.UserDetailsImpl;
+    import account.entity.Audit;
+    import account.entity.User;
+    import account.repository.AuditRepository;
+    import account.repository.UserRepository;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.security.core.userdetails.UserDetails;
+    import org.springframework.security.core.userdetails.UserDetailsService;
+    import org.springframework.security.core.userdetails.UsernameNotFoundException;
+    import org.springframework.stereotype.Service;
+
+    @Service
+    public class UserDetailsServiceImpl  implements UserDetailsService {
+        @Autowired
+        UserRepository userRepository;
+        @Autowired
+        AuditRepository auditRepository;
+
+        @Override
+        public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+            User user = userRepository.findByEmailIgnoreCase(username);
+            if (user == null){
+    //            Audit audit = new Audit();
+    //            audit.sert
+
+                throw new UsernameNotFoundException("Not found: " + username);
+            }
+            return new UserDetailsImpl(user);
+        }
+    }
+  learner_created: true
+- name: src/account/component/AuthenticationSuccessEventListener.java
+  visible: true
+  text: |
+    package account.component;
+
+    import account.entity.User;
+    import account.repository.UserRepository;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.context.ApplicationListener;
+    import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
+    import org.springframework.stereotype.Component;
+
+    @Component
+    public class AuthenticationSuccessEventListener implements ApplicationListener<AuthenticationSuccessEvent> {
+        @Autowired
+        private UserRepository userRepository;
+
+        @Override
+        public void onApplicationEvent(final AuthenticationSuccessEvent e) {
+            User u = userRepository.findByEmailIgnoreCase((e.getAuthentication().getName()));
+            if (u != null && u.getLogin_failure() > 0) {
+                u.unlockUser();
+                userRepository.save(u);
+            } else {
+                //anonymus
+            }
+        }
+    }
+  learner_created: true
+- name: src/account/entity/Audit.java
+  visible: true
+  text: |
+    package account.entity;
+
+    import com.fasterxml.jackson.annotation.JsonAlias;
+    import com.fasterxml.jackson.annotation.JsonProperty;
+    import lombok.AllArgsConstructor;
+    import lombok.Data;
+    import lombok.NoArgsConstructor;
+
+    import javax.persistence.*;
+    import java.time.LocalDateTime;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Entity(name = "audit")
+    public class Audit {
+
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        private Long id;
+
+        @Column
+        private LocalDateTime date;
+        @Column
+        private String action;
+        @Column
+        private String subject = "Anonymous";
+        @Column
+        private String object;
+        @Column
+        private String path;
+
+        @PrePersist
+        public void onPrepersist() {
+            date = LocalDateTime.now();
+        }
+
+        @PreUpdate
+        public void onPreUpdate() {
+            date = LocalDateTime.now();
+        }
+
+    }
+  learner_created: true
+- name: src/account/entity/User.java
+  visible: true
+  text: |
+    package account.entity;
+
+    import com.fasterxml.jackson.annotation.JsonProperty;
+    import lombok.AllArgsConstructor;
+    import lombok.Data;
+    import lombok.NoArgsConstructor;
+    import org.hibernate.type.descriptor.sql.LongVarcharTypeDescriptor;
+
+    import javax.persistence.*;
+    import javax.validation.constraints.Email;
+    import javax.validation.constraints.NotBlank;
+    import javax.validation.constraints.Pattern;
+    import javax.validation.constraints.Size;
+    import java.util.Set;
+    import java.util.TreeSet;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Entity(name = "user")
+    public class User {
+
+        //@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        private Long id;
+        @Column
+        @NotBlank
+        private String name;
+
+        @Column
+        @NotBlank
+        private String lastname;
+
+        @Column
+        @NotBlank
+        @Email
+        @Size(min = 8)
+        @Pattern(regexp = ".+@acme.com")
+        private String email;
+
+        @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+        @Column
+        @NotBlank
+        //@Size(min = 12,message = "The password length must be at leat 12 chars!")
+        private String password;
+
+        @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+        @Column
+        private long login_failure = 0;
+
+        @ManyToMany(fetch = FetchType.EAGER)
+        //@JoinColumn(name="group_id", nullable=false)
+        private Set<Group> roles;
+
+        public void loginFailureInc(){
+            login_failure++;
+        }
+
+        public void unlockUser(){
+            login_failure = 0;
+        }
+        public void lockUsuer(){
+            login_failure = 5;
+        }
+        public boolean nonLocked(){
+            return login_failure < 5;
+        }
+    }
+  learner_created: true
+- name: src/account/exceptions/UserExistException.java
+  visible: true
+  text: |
+    package account.exceptions;
+
+    import org.springframework.http.HttpStatus;
+    import org.springframework.web.bind.annotation.ResponseStatus;
+
+    @ResponseStatus(code = HttpStatus.BAD_REQUEST, reason = "User exist!")
+    public class UserExistException extends RuntimeException{
+    }
+  learner_created: true
+- name: src/account/exceptions/UserNotFoundException.java
+  visible: true
+  text: |
+    package account.exceptions;
+
+    import org.springframework.http.HttpStatus;
+    import org.springframework.web.bind.annotation.ResponseStatus;
+
+    @ResponseStatus(code = HttpStatus.NOT_FOUND, reason = "User not found!")
+    public class UserNotFoundException extends RuntimeException {
+    }
+  learner_created: true
+- name: src/account/repository/PaymentRepository.java
+  visible: true
+  text: |
+    package account.repository;
+
+    import account.entity.Payment;
+    import org.springframework.data.repository.CrudRepository;
+    import org.springframework.stereotype.Component;
+    import org.springframework.stereotype.Repository;
+
+    import java.util.List;
+
+    @Repository
+    public interface PaymentRepository extends CrudRepository<Payment, Long> {
+
+        Payment findByEmployeeIgnoreCaseAndPeriod(String emplee, String period);
+        List<Payment> findByEmployeeIgnoreCase(String emplee);
+
+    }
+  learner_created: true
+- name: src/account/entity/Group.java
+  visible: true
+  text: |
+    package account.entity;
+
+    import lombok.AllArgsConstructor;
+    import lombok.Data;
+    import lombok.NoArgsConstructor;
+
+    import javax.persistence.*;
+    import java.util.Set;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Entity
+    @Table(name = "principle_groups")
+    public class Group {
+
+        public Group(String name) {
+            this.name = name;
+        }
+
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        private Long id;
+
+        @Column(unique = true, nullable = false)
+        private String name;
+
+    //    @OneToMany
+    //    @JoinColumn(name="group_id", nullable=false)
+    //    private Set<User> users;
+
+    }
+  learner_created: true
+- name: src/account/component/AuthenticationFailureListener.java
+  visible: true
+  text: |
+    package account.component;
+
+    import account.AUDIT_EVENTS;
+    import account.entity.Audit;
+    import account.entity.User;
+    import account.repository.AuditRepository;
+    import account.repository.UserRepository;
+    import org.apache.catalina.core.ApplicationContext;
+    import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.context.ApplicationListener;
+    import org.springframework.security.authentication.event.AuthenticationFailureBadCredentialsEvent;
+    import org.springframework.security.core.AuthenticationException;
+    import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
+    import org.springframework.stereotype.Component;
+    import org.springframework.web.context.request.RequestContextHolder;
+    import org.springframework.web.context.request.ServletRequestAttributes;
+
+    import javax.servlet.ServletException;
+    import javax.servlet.http.HttpServletRequest;
+    import javax.servlet.http.HttpServletResponse;
+    import java.io.IOException;
+
+    @Component
+    public class AuthenticationFailureListener implements ApplicationListener<AuthenticationFailureBadCredentialsEvent> {
+        @Autowired
+        private UserRepository userRepository;
+        @Autowired
+        private AuditRepository auditRepository;
+        @Autowired
+        private HttpServletRequest request;
+
+
+
+        @Override
+        public void onApplicationEvent(AuthenticationFailureBadCredentialsEvent e) {
+           String path = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest().getRequestURI();
+            final String xfHeader = request.getHeader("X-Forwarded-For");
+    //        if (xfHeader == null) {
+    //            String r =request.getContextPath();
+    //            System.out.println(r);
+    //        } else {
+    //            String r =xfHeader.split(",")[0];
+    //            System.out.println(r);
+    //        }
+           User u = userRepository.findByEmailIgnoreCase((String) e.getAuthentication().getPrincipal());
+            Audit audit = new Audit();
+            audit.setAction(AUDIT_EVENTS.LOGIN_FAILED.name());
+            audit.setObject(path);
+            audit.setSubject((String) e.getAuthentication().getPrincipal());
+            audit.setPath(path);
+            auditRepository.save(audit);
+
+           if (u != null){
+               boolean isAdmin = false;
+               for(var roles : u.getRoles()){
+                   if (roles.getName().equals("ROLE_ADMINISTRATOR")) {
+                       isAdmin = true;
+                       break;
+                   }
+               }
+               if (!isAdmin){
+                   u.loginFailureInc();
+               }
+
+               userRepository.save(u);
+               if (u.getLogin_failure() > 4){
+                   Audit lock = new Audit();
+                   lock.setAction(AUDIT_EVENTS.LOCK_USER.name());
+                   lock.setObject("Lock user "+u.getEmail());
+                   lock.setSubject(u.getEmail());
+                   lock.setPath(path);
+
+                   Audit brute = new Audit();
+                   brute.setAction(AUDIT_EVENTS.BRUTE_FORCE.name());
+                   brute.setObject(path);
+                   brute.setSubject(u.getEmail());
+                   brute.setPath(path);
+
+                   auditRepository.save(brute);
+                   auditRepository.save(lock);
+               }
+           } else {
+               //anonymus
+           }
+        }
+    }
+  learner_created: true
+- name: src/account/WebSecurityConfigurerImpl.java
+  visible: true
+  text: |
+    package account;
+
+    import account.component.AuthenticationFailureListener;
+    import account.component.RestAuthenticationEntryPoint;
+    import account.repository.AuditRepository;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.context.annotation.Bean;
+    import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+    import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+    import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+    import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+    import org.springframework.security.config.http.SessionCreationPolicy;
+    import org.springframework.security.core.userdetails.UserDetailsService;
+    import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+    import org.springframework.security.crypto.password.PasswordEncoder;
+
+    @EnableWebSecurity
+    public class WebSecurityConfigurerImpl extends WebSecurityConfigurerAdapter {
+
+        @Autowired
+        RestAuthenticationEntryPoint restAuthenticationEntryPoint;
+
+
+        @Autowired
+        UserDetailsService userDetailsService;
+
+        @Autowired
+        AuditRepository auditRepository;
+
+        @Autowired
+        CustomAuthenticationFailureHandler customAuthenticationFailureHandler;
+
+        @Override
+        protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+            auth
+                    .userDetailsService(userDetailsService) // user store 1
+                    .passwordEncoder(getEncoder());
+
+    //        auth
+    //                .inMemoryAuthentication() // user store 2
+    //                .withUser("Admin").password("hardcoded").roles("USER")
+    //                .and().passwordEncoder(NoOpPasswordEncoder.getInstance());
+        }
+
+        public void configure(HttpSecurity http) throws Exception {
+            http.httpBasic()
+                    .authenticationEntryPoint(restAuthenticationEntryPoint) // Handle auth error
+                    .and()
+                    .csrf().disable().headers().frameOptions().disable() // for Postman, the H2 console
+                    .and()
+                    .authorizeRequests() // manage access
+                    .mvcMatchers("/api/signup").permitAll()
+                    .mvcMatchers("api/auth/changepass").authenticated()
+                    .mvcMatchers("api/admin/user", "api/admin/user/**").hasRole("ADMINISTRATOR")
+                    .mvcMatchers("api/acct/payments").hasRole("ACCOUNTANT")
+                    .mvcMatchers("api/empl/payment").hasAnyRole("ACCOUNTANT", "USER")
+                    .mvcMatchers("api/security/events").hasAnyRole("AUDITOR")
+                    // other matchers
+                    .and()
+                    .sessionManagement()
+                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                    .and()
+                    .formLogin().failureHandler(customAuthenticationFailureHandler)
+                    .and()
+                    .exceptionHandling().accessDeniedHandler(new CustomAccessDeniedHandler(auditRepository))
+            ;
+        }
+
+
+        @Bean
+        public PasswordEncoder getEncoder() {
+            return new BCryptPasswordEncoder(13);
+        }
+    }
+  learner_created: true
+- name: src/account/controller/AccauntRestController.java
+  visible: true
+  text: |
+    package account.controller;
+
+    import account.AUDIT_EVENTS;
+    import account.entity.Audit;
+    import account.exceptions.UserExistException;
+    import account.dto.ChangePasswordDto;
+    import account.dto.PaymentResponseDto;
+    import account.dto.UserDto;
+    import account.entity.Group;
+    import account.entity.Payment;
+    import account.entity.User;
+    import account.repository.AuditRepository;
+    import account.repository.GroupRepository;
+    import account.repository.PaymentRepository;
+    import account.repository.UserRepository;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.http.HttpStatus;
+    import org.springframework.http.ResponseEntity;
+    import org.springframework.security.core.annotation.AuthenticationPrincipal;
+    import org.springframework.security.core.userdetails.UserDetails;
+    import org.springframework.security.crypto.password.PasswordEncoder;
+    import org.springframework.web.bind.annotation.*;
+    import org.springframework.web.server.ResponseStatusException;
+
+    import javax.transaction.Transactional;
+    import javax.validation.ConstraintViolationException;
+    import javax.validation.Valid;
+    import java.time.YearMonth;
+    import java.time.format.DateTimeFormatter;
+    import java.util.*;
+
+    @RestController
+    public class AccauntRestController {
+        @Autowired
+        UserRepository userRepository;
+        @Autowired
+        PaymentRepository paymentRepository;
+        @Autowired
+        GroupRepository groupRepository;
+        @Autowired
+        PasswordEncoder encoder;
+        @Autowired
+        AuditRepository auditRepository;
+
+        private HashSet<String> hackedPassword = new HashSet<>(Arrays.asList("PasswordForJanuary", "PasswordForFebruary", "PasswordForMarch", "PasswordForApril",
+                "PasswordForMay", "PasswordForJune", "PasswordForJuly", "PasswordForAugust",
+                "PasswordForSeptember", "PasswordForOctober", "PasswordForNovember", "PasswordForDecember"));
+
+        @ExceptionHandler({ConstraintViolationException.class})
+        @PostMapping("/api/auth/signup")
+        public ResponseEntity<?> signup(@Valid @RequestBody User user) {
+            if (user.getPassword().length() < 12) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password length must be 12 chars minimum!");
+            }
+
+
+            if (hackedPassword.contains(user.getPassword())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The password is in the hacker's database!");
+            }
+
+
+            User userOld = userRepository.findByEmailIgnoreCase(user.getEmail());
+            if (userOld == null) {
+                user.setPassword(encoder.encode(user.getPassword()));
+                Set<Group> g = new HashSet<>();
+                if(userRepository.count()==0){
+                    g.add( groupRepository.findByName("ROLE_ADMINISTRATOR"));
+                } else {
+                    g.add( groupRepository.findByName("ROLE_USER"));
+                }
+                user.setRoles(g);
+                userRepository.save(user);
+                Audit audit = new Audit();
+                audit.setAction(AUDIT_EVENTS.CREATE_USER.name());
+                audit.setPath("/api/auth/signup");
+                audit.setSubject("Anonymous");
+                audit.setObject(user.getEmail().toLowerCase());
+                auditRepository.save(audit);
+
+
+                return new ResponseEntity<>(new UserDto(user), HttpStatus.OK);
+            }
+
+            throw new UserExistException();
+        }
+
+        @GetMapping("api/empl/payment")
+        public ResponseEntity<?> getPayment(@AuthenticationPrincipal UserDetails details,@RequestParam(required = false) String period) {
+            if (details != null) {
+                User user = userRepository.findByEmailIgnoreCase(details.getUsername());
+
+                if (period == null){
+                    List<PaymentResponseDto> list = new ArrayList<>();
+                    List<Payment> payments = paymentRepository.findByEmployeeIgnoreCase(user.getEmail());
+                    for (Payment p : payments){
+                        list.add(createPaymentMessage(user, p));
+                    }
+                    list.sort(Comparator.comparing(PaymentResponseDto::periodYearMonth).reversed());
+
+                    return new ResponseEntity<>(list, HttpStatus.OK);
+                } else {
+                    Payment p = paymentRepository.findByEmployeeIgnoreCaseAndPeriod(user.getEmail(),period);
+                    if (p!=null){
+                        return new ResponseEntity<>(createPaymentMessage(user, p), HttpStatus.OK);
+                    }else {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "указан неверный период");
+                    }
+                }
+            }
+
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        }
+
+
+        private PaymentResponseDto createPaymentMessage(User user, Payment p) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-yyyy");
+            YearMonth ym = YearMonth.parse(p.getPeriod(), formatter);
+            return new PaymentResponseDto(user.getName(),user.getLastname(),ym,salaryToString(p.getSalary()));
+        }
+
+        private static String salaryToString(long salary){
+            long dollar = salary/100;
+            long cent = salary%100;
+            String s = dollar + " dollar(s) " + cent + " cent(s)";
+            return s;
+
+        }
+
+        @PostMapping("api/auth/changepass")
+        public ResponseEntity<?> changePassword(@AuthenticationPrincipal UserDetails details, @Valid @RequestBody ChangePasswordDto changePasswordDto) {
+            if (details != null) {
+                if (changePasswordDto.getPassword().length() < 12) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password length must be 12 chars minimum!");
+                }
+                System.out.println("password = " + changePasswordDto.getPassword());
+                if (hackedPassword.contains(changePasswordDto.getPassword())) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The password is in the hacker's database!");
+                }
+                User user = userRepository.findByEmailIgnoreCase(details.getUsername());
+                if (encoder.matches(changePasswordDto.getPassword(), user.getPassword())) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The passwords must be different!");
+                }
+                user.setPassword(encoder.encode(changePasswordDto.getPassword()));
+                userRepository.save(user);
+                Audit audit = new Audit();
+                audit.setAction(AUDIT_EVENTS.CHANGE_PASSWORD.name());
+                audit.setObject(user.getEmail().toLowerCase());
+                audit.setSubject(user.getEmail().toLowerCase());
+                audit.setPath("api/auth/changepass");
+                auditRepository.save(audit);
+
+
+                HashMap<String, String> map = new HashMap<>();
+                map.put("email", user.getEmail().toLowerCase());
+                map.put("status", "The password has been updated successfully");
+
+                return new ResponseEntity<>(map, HttpStatus.OK);
+            }
+
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        }
+
+        @PostMapping("api/acct/payments")
+        @Transactional
+        public ResponseEntity<?> addPayments(@RequestBody List<Payment> payments) {
+            saveAllPayments(payments);
+            HashMap<String, String> m = new HashMap<>();
+            m.put("status", "Added successfully!");
+            return new ResponseEntity<>(m, HttpStatus.OK);
+        }
+
+
+        public void saveAllPayments(List<Payment> payments) {
+    //        paymentRepository.saveAll(payments);
+
+            for (var p : payments) {
+                if (p.getSalary() <=0){
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "отрицательная зарплата");
+                }
+                YearMonth ym = null;
+                try {
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-yyyy");
+                     ym = YearMonth.parse(p.getPeriod(),formatter);
+                } catch (Exception e) {
+                    //e.printStackTrace();
+                }
+
+                if (ym == null){
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "неправильная дата");
+                }
+
+                User u = userRepository.findByEmailIgnoreCase(p.getEmployee());
+                if (u != null) {
+                    Payment pp = paymentRepository.findByEmployeeIgnoreCaseAndPeriod(p.getEmployee(), p.getPeriod());
+                    if (pp!=null){
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ведомость уже существует");
+                    }
+                    p.setUser(u);
+                    paymentRepository.save(p);
+                } else {
+    //                throw new RuntimeException();
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "нету юзера");
+                }
+            }
+        }
+
+        @PutMapping("api/acct/payments")
+        public ResponseEntity<?> updatePayments(@RequestBody Payment newPayment) {
+            if (newPayment.getSalary() <=0){
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "отрицательная зарплата");
+            }
+
+            User u = userRepository.findByEmailIgnoreCase(newPayment.getEmployee());
+            if (u != null) {
+                Payment oldPayment = paymentRepository.findByEmployeeIgnoreCaseAndPeriod(newPayment.getEmployee(), newPayment.getPeriod());
+                if (oldPayment!=null){
+                    oldPayment.setSalary(newPayment.getSalary());
+                    paymentRepository.save(oldPayment);
+
+                } else {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Error!");
+                }
+            } else {
+    //                throw new RuntimeException();
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "нету юзера");
+            }
+            HashMap<String, String> m = new HashMap<>();
+            m.put("status", "Updated successfully!");
+            return new ResponseEntity<>(m, HttpStatus.OK);
+        }
+
+        @GetMapping("api/security/events")
+        public ResponseEntity<?> getAuditEvents(){
+            return new ResponseEntity<>(auditRepository.findAll(),HttpStatus.OK);
+        }
+
+
+    }
+  learner_created: true
+- name: src/account/dto/AdminUpdateUserDto.java
+  visible: true
+  text: |
+    package account.dto;
+
+    import lombok.AllArgsConstructor;
+    import lombok.Data;
+    import lombok.NoArgsConstructor;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public class AdminUpdateUserDto {
+        String user;
+        String role;
+        String operation;
+
+
+
+
+    }
+  learner_created: true
+- name: src/account/repository/AuditRepository.java
+  visible: true
+  text: |
+    package account.repository;
+
+    import account.entity.Audit;
+    import org.springframework.data.repository.CrudRepository;
+    import org.springframework.stereotype.Repository;
+
+    @Repository
+    public interface AuditRepository extends CrudRepository<Audit, Long> {
+    }
+  learner_created: true
+- name: src/account/repository/UserRepository.java
+  visible: true
+  text: |
+    package account.repository;
+
+    import account.entity.User;
+    import org.springframework.data.repository.CrudRepository;
+    import org.springframework.stereotype.Component;
+    import org.springframework.stereotype.Repository;
+
+
+    @Repository
+    public interface UserRepository extends CrudRepository<User, Long> {
+        User findByEmailIgnoreCase(String name);
+
+
+    }
+  learner_created: true
+- name: src/account/CustomAuthenticationFailureHandler.java
+  visible: true
+  text: |
+    package account;
+
+    import org.springframework.security.core.AuthenticationException;
+    import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
+    import org.springframework.stereotype.Component;
+
+    import javax.servlet.ServletException;
+    import javax.servlet.http.HttpServletRequest;
+    import javax.servlet.http.HttpServletResponse;
+    import java.io.IOException;
+
+    @Component
+    public class CustomAuthenticationFailureHandler extends SimpleUrlAuthenticationFailureHandler {
+
+        @Override
+        public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
+                                            AuthenticationException exception) throws IOException, ServletException {
+            String email = request.getParameter("email");
+            String path = request.getContextPath();
+            System.out.println(email);
+            System.out.println(path);
+
+
+        }
+    }
+  learner_created: true
+- name: src/account/UserDetailsImpl.java
+  visible: true
+  text: |
+    package account;
+
+    import account.entity.User;
+    import org.springframework.security.core.GrantedAuthority;
+    import org.springframework.security.core.authority.SimpleGrantedAuthority;
+    import org.springframework.security.core.userdetails.UserDetails;
+
+    import java.util.ArrayList;
+    import java.util.Collection;
+    import java.util.List;
+
+    public class UserDetailsImpl implements UserDetails {
+        private User user;
+        private final List<GrantedAuthority> rolesAndAuthorities;
+
+        public UserDetailsImpl(User user) {
+            this.user = user;
+            rolesAndAuthorities = new ArrayList<>();
+            user.getRoles().forEach(t -> rolesAndAuthorities.add(new SimpleGrantedAuthority(t.getName())));
+        }
+
+        @Override
+        public Collection<? extends GrantedAuthority> getAuthorities() {
+            return rolesAndAuthorities;
+        }
+
+        @Override
+        public String getPassword() {
+            return user.getPassword();
+        }
+
+        @Override
+        public String getUsername() {
+            return user.getEmail();
+        }
+
+        @Override
+        public boolean isAccountNonExpired() {
+            return true;
+        }
+
+        @Override
+        public boolean isAccountNonLocked() {
+            return user.nonLocked();
+        }
+
+        @Override
+        public boolean isCredentialsNonExpired() {
+            return true;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return true;
+        }
+    }
+  learner_created: true
+- name: src/account/dto/PaymentResponseDto.java
+  visible: true
+  text: |
+    package account.dto;
+
+    import lombok.AllArgsConstructor;
+    import lombok.Data;
+    import lombok.NoArgsConstructor;
+
+    import java.time.YearMonth;
+    import java.time.format.DateTimeFormatter;
+    import java.util.Locale;
+
+
+    public class PaymentResponseDto {
+        private String name;
+        private String lastname;
+        private YearMonth period;
+        private String salary;
+
+        static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM-yyyy", Locale.US);
+
+        public PaymentResponseDto(String name, String lastname, YearMonth period, String salary) {
+            this.name = name;
+            this.lastname = lastname;
+            this.period = period;
+            this.salary = salary;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getLastname() {
+            return lastname;
+        }
+
+        public String getPeriod() {
+            return  period.format(formatter);
+        }
+
+        public YearMonth periodYearMonth() {
+            return  period;
+        }
+
+        public String getSalary() {
+            return salary;
+        }
+    }
+  learner_created: true
+- name: src/account/entity/Payment.java
+  visible: true
+  text: |
+    package account.entity;
+
+
+    import lombok.AllArgsConstructor;
+    import lombok.Data;
+    import lombok.NoArgsConstructor;
+
+    import javax.persistence.*;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Entity(name = "payment")
+    public class Payment {
+
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        private Long id;
+
+        @Column
+        private String employee;
+
+        @Column
+        private String  period;
+
+    //    @Min(value = 0)
+        @Column
+        private Long salary;
+
+        @ManyToOne
+        @JoinColumn(name="user_id", nullable=false)
+        private User user;
+    }
+  learner_created: true
+- name: src/account/dto/AdminChangeAccessDto.java
+  visible: true
+  text: |
+    package account.dto;
+
+
+    import lombok.AllArgsConstructor;
+    import lombok.Data;
+    import lombok.NoArgsConstructor;
+
+    import javax.validation.constraints.NotEmpty;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public class AdminChangeAccessDto {
+
+        @NotEmpty
+        private String user;
+        private String operation;
+
+    }
+  learner_created: true
+- name: src/account/repository/GroupRepository.java
+  visible: true
+  text: |
+    package account.repository;
+
+
+    import account.entity.Group;
+    import account.entity.User;
+    import org.springframework.data.repository.CrudRepository;
+    import org.springframework.stereotype.Component;
+    import org.springframework.stereotype.Repository;
+
+    @Repository
+    public interface GroupRepository  extends CrudRepository<Group, Long> {
+
+        public Group findByName(String name);
+    }
+  learner_created: true
+- name: src/account/controller/AdminController.java
+  visible: true
+  text: |
+    package account.controller;
+
+    import account.AUDIT_EVENTS;
+    import account.dto.AdminChangeAccessDto;
+    import account.entity.Audit;
+    import account.exceptions.UserNotFoundException;
+    import account.dto.AdminUpdateUserDto;
+    import account.dto.UserDto;
+    import account.entity.Group;
+    import account.entity.User;
+    import account.repository.AuditRepository;
+    import account.repository.GroupRepository;
+    import account.repository.UserRepository;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.http.HttpStatus;
+    import org.springframework.http.ResponseEntity;
+    import org.springframework.security.core.annotation.AuthenticationPrincipal;
+    import org.springframework.security.core.userdetails.UserDetails;
+    import org.springframework.web.bind.annotation.*;
+    import org.springframework.web.server.ResponseStatusException;
+
+    import javax.validation.Valid;
+    import java.util.Comparator;
+    import java.util.HashMap;
+    import java.util.Map;
+    import java.util.TreeSet;
+
+    @RestController
+    public class AdminController {
+        @Autowired
+        private UserRepository userRepository;
+
+        @Autowired
+        private GroupRepository groupRepository;
+        @Autowired
+        private AuditRepository auditRepository;
+
+        @GetMapping("api/admin/user")
+        public ResponseEntity<?> getAllUsers(@AuthenticationPrincipal UserDetails details) {
+            var set = userRepository.findAll();
+            TreeSet<UserDto> userDtos = new TreeSet<>(Comparator.comparing(t -> t.getId()));
+            set.forEach(t -> userDtos.add(new UserDto(t)));
+
+            return new ResponseEntity<>(userDtos, HttpStatus.OK);
+        }
+
+        @DeleteMapping(value = {"api/admin/user", "api/admin/user/{userEmail}"})
+        public ResponseEntity<?> deleteUser(@AuthenticationPrincipal UserDetails details, @PathVariable String userEmail) {
+            User user = userRepository.findByEmailIgnoreCase(userEmail);
+            if (user != null) {
+                if (user.getRoles().contains(groupRepository.findByName("ROLE_ADMINISTRATOR"))) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can't remove ADMINISTRATOR role!");
+                }
+
+                userRepository.delete(user);
+
+                Audit audit = new Audit();
+                audit.setAction(AUDIT_EVENTS.DELETE_USER.name());
+                audit.setSubject(details.getUsername().toLowerCase());
+                audit.setObject(user.getEmail().toLowerCase());
+                audit.setPath("api/admin/user");
+                auditRepository.save(audit);
+
+                Map<String, String> map = new HashMap<>();
+                map.put("user", user.getEmail().toLowerCase());
+                map.put("status", "Deleted successfully!");
+                return new ResponseEntity<>(map, HttpStatus.OK);
+            }
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found!");
+        }
+
+        @PutMapping("api/admin/user/role")
+        public ResponseEntity<?> updateUserRole(@AuthenticationPrincipal UserDetails details, @RequestBody AdminUpdateUserDto updateUserDto) {
+            User user = userRepository.findByEmailIgnoreCase(updateUserDto.getUser());
+            String operation = updateUserDto.getOperation();
+            if (user != null) {
+                Group group = groupRepository.findByName("ROLE_" + updateUserDto.getRole());
+                if (group == null) {
+                    throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found!");
+                }
+
+                if (operation.equals("GRANT")) {
+                    boolean isAdmin = false;
+                    for (var role : user.getRoles()) {
+                        if (role.getName().equals("ROLE_ADMINISTRATOR")) {
+                            isAdmin = true;
+                            break;
+                        }
+                    }
+                    if (!isAdmin && group.getName().equals("ROLE_ADMINISTRATOR")) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The user cannot combine administrative and business roles!");
+                    }
+                    if (isAdmin && (group.getName().equals("ROLE_USER")
+                            || group.getName().equals("ROLE_ACCOUNTANT")
+                            || group.getName().equals("ROLE_AUDITOR"))) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The user cannot combine administrative and business roles!");
+                    }
+
+
+
+                    user.getRoles().add(group);
+                    userRepository.save(user);
+                    Audit audit = new Audit();
+                    audit.setAction(AUDIT_EVENTS.GRANT_ROLE.name());
+                    audit.setSubject(details.getUsername().toLowerCase());
+                    audit.setObject("Grant role " + updateUserDto.getRole() +" to " +user.getEmail().toLowerCase());
+                    audit.setPath("api/admin/user/role");
+                    auditRepository.save(audit);
+
+                    return new ResponseEntity<>(new UserDto(user), HttpStatus.OK);
+                } else if (operation.equals("REMOVE")) {
+                    if (group.getName().equals("ROLE_ADMINISTRATOR")) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can't remove ADMINISTRATOR role!");
+                    }
+                    if (!user.getRoles().contains(group)) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The user does not have a role!");
+                    }
+                    if (user.getRoles().size() == 1) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The user must have at least one role!");
+                    }
+                    user.getRoles().remove(group);
+                    userRepository.save(user);
+                    Audit audit = new Audit();
+                    audit.setAction(AUDIT_EVENTS.REMOVE_ROLE.name());
+                    audit.setSubject(details.getUsername().toLowerCase());
+                    audit.setObject("Remove role " + updateUserDto.getRole() +" from " +user.getEmail().toLowerCase());
+                    audit.setPath("api/admin/user/role");
+                    auditRepository.save(audit);
+
+                    return new ResponseEntity<>(new UserDto(user), HttpStatus.OK);
+                } else {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "unknown operation:" + operation);
+                }
+            } else {
+                throw new UserNotFoundException();
+            }
+        }
+
+        @PutMapping("api/admin/user/access")
+        public ResponseEntity<?> changeUserAccess(@AuthenticationPrincipal UserDetails details, @RequestBody @Valid AdminChangeAccessDto changeAccess) {
+            User user = userRepository.findByEmailIgnoreCase(changeAccess.getUser());
+            if (user != null) {
+                Audit audit = new Audit();
+                audit.setSubject(details.getUsername().toLowerCase());
+                audit.setPath("api/admin/user/access");
+
+                if (changeAccess.getOperation().equals("LOCK")) {
+                    if (user.getRoles().contains(groupRepository.findByName("ROLE_ADMINISTRATOR"))) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can't lock the ADMINISTRATOR!");
+                    }
+                    user.lockUsuer();
+                    audit.setAction(AUDIT_EVENTS.LOCK_USER.name());
+                    audit.setObject("Lock user " + user.getEmail().toLowerCase());
+
+                } else if (changeAccess.getOperation().equals("UNLOCK")){
+                    user.unlockUser();
+                    audit.setAction(AUDIT_EVENTS.UNLOCK_USER.name());
+                    audit.setObject("Unlock user " + user.getEmail().toLowerCase());
+                }
+
+                userRepository.save(user);
+
+                auditRepository.save(audit);
+                Map<String, String> map = new HashMap<>();
+
+                map.put("status", "User " + user.getEmail().toLowerCase()
+                        + " " + (changeAccess.getOperation().equals("LOCK") ? "locked!" : "unlocked!"));
+                return new ResponseEntity<>(map, HttpStatus.OK);
+            }
+
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found!");
+        }
+
+    }
+  learner_created: true
+- name: src/account/dto/UserDto.java
+  visible: true
+  text: |
+    package account.dto;
+
+    import account.entity.Group;
+    import account.entity.User;
+    import com.fasterxml.jackson.annotation.JsonProperty;
+
+    import javax.persistence.Column;
+    import javax.persistence.ManyToMany;
+    import javax.validation.constraints.Email;
+    import javax.validation.constraints.NotBlank;
+    import javax.validation.constraints.Pattern;
+    import javax.validation.constraints.Size;
+    import java.util.Set;
+    import java.util.TreeSet;
+
+    public class UserDto {
+        private Long id;
+        private String name;
+        private String lastname;
+        private String email;
+        private TreeSet<String> roles;
+
+        public UserDto(User user) {
+            this.id = user.getId();
+            this.name = user.getName();
+            this.lastname = user.getLastname();
+            this.email = user.getEmail().toLowerCase();
+            this.roles = new TreeSet<>();
+            for (var roles : user.getRoles()){
+                this.roles.add(roles.getName());
+            }
+        }
+
+        public Long getId() {
+            return id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getLastname() {
+            return lastname;
+        }
+
+        public String getEmail() {
+            return email;
+        }
+
+        public TreeSet<String> getRoles() {
+            return roles;
+        }
+    }
+  learner_created: true
+- name: src/account/AUDIT_EVENTS.java
+  visible: true
+  text: |
+    package account;
+
+    public enum AUDIT_EVENTS {
+        CREATE_USER,
+        CHANGE_PASSWORD,
+        ACCESS_DENIED,
+        LOGIN_FAILED,
+        GRANT_ROLE,
+        REMOVE_ROLE,
+        LOCK_USER,
+        UNLOCK_USER,
+        DELETE_USER,
+        BRUTE_FORCE
+    }
+  learner_created: true
+- name: src/account/component/DataLoader.java
+  visible: true
+  text: |
+    package account.component;
+
+    import account.entity.Group;
+    import account.repository.GroupRepository;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.stereotype.Component;
+
+    @Component
+    public class DataLoader {
+
+        private GroupRepository groupRepository;
+
+        @Autowired
+        public DataLoader(@Autowired GroupRepository groupRepository) {
+            this.groupRepository = groupRepository;
+            createRoles();
+        }
+
+        private void createRoles() {
+            try {
+                groupRepository.save(new Group("ROLE_ADMINISTRATOR"));
+                groupRepository.save(new Group("ROLE_USER"));
+                groupRepository.save(new Group("ROLE_ACCOUNTANT"));
+                groupRepository.save(new Group("ROLE_AUDITOR"));
+            } catch (Exception e) {
+
+            }
+        }
+    }
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/217/stages/1092/implement#comment
 status: Unchecked
 record: -1

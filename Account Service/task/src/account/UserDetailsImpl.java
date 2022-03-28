@@ -41,7 +41,7 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return user.getLogin_failure() <= 5;
+        return user.nonLocked();
     }
 
     @Override

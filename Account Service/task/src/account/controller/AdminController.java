@@ -56,8 +56,8 @@ public class AdminController {
 
             Audit audit = new Audit();
             audit.setAction(AUDIT_EVENTS.DELETE_USER.name());
-            audit.setSubject(details.getUsername());
-            audit.setObject(user.getEmail());
+            audit.setSubject(details.getUsername().toLowerCase());
+            audit.setObject(user.getEmail().toLowerCase());
             audit.setPath("api/admin/user");
             auditRepository.save(audit);
 
@@ -122,7 +122,7 @@ public class AdminController {
                 userRepository.save(user);
                 Audit audit = new Audit();
                 audit.setAction(AUDIT_EVENTS.REMOVE_ROLE.name());
-                audit.setObject(details.getUsername().toLowerCase());
+                audit.setSubject(details.getUsername().toLowerCase());
                 audit.setObject("Remove role " + updateUserDto.getRole() +" from " +user.getEmail().toLowerCase());
                 audit.setPath("api/admin/user/role");
                 auditRepository.save(audit);
@@ -141,7 +141,7 @@ public class AdminController {
         User user = userRepository.findByEmailIgnoreCase(changeAccess.getUser());
         if (user != null) {
             Audit audit = new Audit();
-            audit.setSubject(details.getUsername());
+            audit.setSubject(details.getUsername().toLowerCase());
             audit.setPath("api/admin/user/access");
 
             if (changeAccess.getOperation().equals("LOCK")) {

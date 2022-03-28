@@ -17,6 +17,8 @@ public class CustomAuthenticationFailureHandler extends SimpleUrlAuthenticationF
                                         AuthenticationException exception) throws IOException, ServletException {
         String email = request.getParameter("email");
         String path = request.getContextPath();
+        System.out.println(email);
+        System.out.println(path);
 
 
     }

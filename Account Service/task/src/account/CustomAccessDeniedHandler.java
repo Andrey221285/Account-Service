@@ -36,7 +36,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
                     + request.getRequestURI());
             Audit audit = new Audit();
             audit.setAction(AUDIT_EVENTS.ACCESS_DENIED.name());
-            audit.setSubject(auth.getName());
+            audit.setSubject(auth.getName().toLowerCase());
             audit.setObject(request.getRequestURI());
             audit.setPath(request.getRequestURI());
             auditRepository.save(audit);

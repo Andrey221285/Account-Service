@@ -20,6 +20,7 @@ public class WebSecurityConfigurerImpl extends WebSecurityConfigurerAdapter {
     @Autowired
     RestAuthenticationEntryPoint restAuthenticationEntryPoint;
 
+
     @Autowired
     UserDetailsService userDetailsService;
 
@@ -58,6 +59,8 @@ public class WebSecurityConfigurerImpl extends WebSecurityConfigurerAdapter {
                 .and()
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .formLogin().failureHandler(customAuthenticationFailureHandler)
                 .and()
                 .exceptionHandling().accessDeniedHandler(new CustomAccessDeniedHandler(auditRepository))
         ;
