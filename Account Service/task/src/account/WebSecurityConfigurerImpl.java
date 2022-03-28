@@ -23,9 +23,11 @@ public class WebSecurityConfigurerImpl extends WebSecurityConfigurerAdapter {
     @Autowired
     UserDetailsService userDetailsService;
 
-    @Autowired AuditRepository auditRepository;
+    @Autowired
+    AuditRepository auditRepository;
 
-    @Autowired CustomAuthenticationFailureHandler customAuthenticationFailureHandler;
+    @Autowired
+    CustomAuthenticationFailureHandler customAuthenticationFailureHandler;
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
@@ -40,7 +42,7 @@ public class WebSecurityConfigurerImpl extends WebSecurityConfigurerAdapter {
     }
 
     public void configure(HttpSecurity http) throws Exception {
-        http.httpBasic().failureHandler(customAuthenticationFailureHandler)
+        http.httpBasic()
                 .authenticationEntryPoint(restAuthenticationEntryPoint) // Handle auth error
                 .and()
                 .csrf().disable().headers().frameOptions().disable() // for Postman, the H2 console
@@ -48,19 +50,18 @@ public class WebSecurityConfigurerImpl extends WebSecurityConfigurerAdapter {
                 .authorizeRequests() // manage access
                 .mvcMatchers("/api/signup").permitAll()
                 .mvcMatchers("api/auth/changepass").authenticated()
-                .mvcMatchers("api/admin/user","api/admin/user/**").hasRole("ADMINISTRATOR")
-                .mvcMatchers( "api/acct/payments").hasRole("ACCOUNTANT")
-                .mvcMatchers( "api/empl/payment").hasAnyRole("ACCOUNTANT", "USER")
-                .mvcMatchers( "api/security/events").hasAnyRole("AUDITOR")
+                .mvcMatchers("api/admin/user", "api/admin/user/**").hasRole("ADMINISTRATOR")
+                .mvcMatchers("api/acct/payments").hasRole("ACCOUNTANT")
+                .mvcMatchers("api/empl/payment").hasAnyRole("ACCOUNTANT", "USER")
+                .mvcMatchers("api/security/events").hasAnyRole("AUDITOR")
                 // other matchers
                 .and()
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-        .exceptionHandling().accessDeniedHandler(new CustomAccessDeniedHandler(auditRepository))
+                .exceptionHandling().accessDeniedHandler(new CustomAccessDeniedHandler(auditRepository))
         ;
     }
-
 
 
     @Bean
