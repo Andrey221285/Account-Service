@@ -1,52 +1,5 @@
 type: edu
 files:
-- name: build.gradle
-  visible: true
-  text: |-
-    plugins {
-        id 'java'
-        id 'org.springframework.boot' version '2.3.1.RELEASE'
-        id 'io.spring.dependency-management' version '1.0.9.RELEASE'
-    }
-
-    repositories {
-        mavenCentral()
-    }
-
-    sourceSets.main.resources.srcDirs = ["src/resources"]
-
-    dependencies {
-        implementation 'org.springframework.boot:spring-boot-starter'
-        implementation 'org.springframework.boot:spring-boot-starter-actuator'
-        implementation 'org.springframework.boot:spring-boot-starter-web'
-        implementation group: 'org.hibernate', name: 'hibernate-validator', version: '6.1.0.Final'
-    }
-  learner_created: false
-- name: src/account/AccountServiceApplication.java
-  visible: true
-  text: |-
-    package account;
-
-    import org.springframework.boot.SpringApplication;
-    import org.springframework.boot.autoconfigure.SpringBootApplication;
-
-    @SpringBootApplication
-    public class AccountServiceApplication {
-
-        public static void main(String[] args) {
-            SpringApplication.run(AccountServiceApplication.class, args);
-        }
-
-    }
-  learner_created: false
-- name: src/resources/application.properties
-  visible: true
-  text: |-
-    server.port=28852
-    management.endpoints.web.exposure.include=*
-    management.endpoint.shutdown.enabled=true
-    spring.jackson.serialization.INDENT_OUTPUT=true
-  learner_created: false
 - name: test/AccountServiceTest.java
   visible: false
   text: |
@@ -189,58 +142,6 @@ files:
        // @Size(min = 12,message = "The password length must be at leat 12 chars!")
         @JsonProperty("new_password")
         private String password;
-    }
-  learner_created: true
-- name: src/account/CustomAccessDeniedHandler.java
-  visible: true
-  text: |
-    package account;
-
-    import account.entity.Audit;
-    import account.repository.AuditRepository;
-    import org.springframework.beans.factory.annotation.Autowired;
-    import org.springframework.http.HttpStatus;
-    import org.springframework.security.access.AccessDeniedException;
-    import org.springframework.security.core.Authentication;
-    import org.springframework.security.core.context.SecurityContextHolder;
-    import org.springframework.security.web.access.AccessDeniedHandler;
-    import org.springframework.stereotype.Component;
-    import org.springframework.web.server.ResponseStatusException;
-
-    import javax.servlet.ServletException;
-    import javax.servlet.http.HttpServletRequest;
-    import javax.servlet.http.HttpServletResponse;
-    import java.io.IOException;
-
-    public class CustomAccessDeniedHandler implements AccessDeniedHandler {
-        private AuditRepository auditRepository;
-
-        public CustomAccessDeniedHandler(AuditRepository auditRepository) {
-            this.auditRepository = auditRepository;
-        }
-
-        @Override
-        public void handle(
-                HttpServletRequest request,
-                HttpServletResponse response,
-                AccessDeniedException exc) throws IOException, ServletException {
-            Authentication auth
-                    = SecurityContextHolder.getContext().getAuthentication();
-            if (auth != null) {
-                System.out.println("User: " + auth.getName()
-                        + " attempted to access the protected URL: "
-                        + request.getRequestURI());
-                Audit audit = new Audit();
-                audit.setAction(AUDIT_EVENTS.ACCESS_DENIED.name());
-                audit.setSubject(auth.getName().toLowerCase());
-                audit.setObject(request.getRequestURI());
-                audit.setPath(request.getRequestURI());
-                auditRepository.save(audit);
-            }
-
-
-            response.sendError(HttpStatus.FORBIDDEN.value(), "Access Denied!");
-        }
     }
   learner_created: true
 - name: src/account/service/UserDetailsServiceImpl.java
@@ -972,35 +873,6 @@ files:
 
     }
   learner_created: true
-- name: src/account/CustomAuthenticationFailureHandler.java
-  visible: true
-  text: |
-    package account;
-
-    import org.springframework.security.core.AuthenticationException;
-    import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
-    import org.springframework.stereotype.Component;
-
-    import javax.servlet.ServletException;
-    import javax.servlet.http.HttpServletRequest;
-    import javax.servlet.http.HttpServletResponse;
-    import java.io.IOException;
-
-    @Component
-    public class CustomAuthenticationFailureHandler extends SimpleUrlAuthenticationFailureHandler {
-
-        @Override
-        public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
-                                            AuthenticationException exception) throws IOException, ServletException {
-            String email = request.getParameter("email");
-            String path = request.getContextPath();
-            System.out.println(email);
-            System.out.println(path);
-
-
-        }
-    }
-  learner_created: true
 - name: src/account/UserDetailsImpl.java
   visible: true
   text: |
@@ -1424,24 +1296,6 @@ files:
         }
     }
   learner_created: true
-- name: src/account/AUDIT_EVENTS.java
-  visible: true
-  text: |
-    package account;
-
-    public enum AUDIT_EVENTS {
-        CREATE_USER,
-        CHANGE_PASSWORD,
-        ACCESS_DENIED,
-        LOGIN_FAILED,
-        GRANT_ROLE,
-        REMOVE_ROLE,
-        LOCK_USER,
-        UNLOCK_USER,
-        DELETE_USER,
-        BRUTE_FORCE
-    }
-  learner_created: true
 - name: src/account/component/DataLoader.java
   visible: true
   text: |
@@ -1475,6 +1329,357 @@ files:
         }
     }
   learner_created: true
+- name: src/account/AccountServiceApplication.java
+  visible: true
+  text: |-
+    package account;
+
+    import org.springframework.boot.SpringApplication;
+    import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+    @SpringBootApplication
+    public class AccountServiceApplication {
+
+        public static void main(String[] args) {
+            SpringApplication.run(AccountServiceApplication.class, args);
+        }
+
+    }
+  learner_created: false
+- name: src/account/AUDIT_EVENTS.java
+  visible: true
+  text: |
+    package account;
+
+    public enum AUDIT_EVENTS {
+        CREATE_USER,
+        CHANGE_PASSWORD,
+        ACCESS_DENIED,
+        LOGIN_FAILED,
+        GRANT_ROLE,
+        REMOVE_ROLE,
+        LOCK_USER,
+        UNLOCK_USER,
+        DELETE_USER,
+        BRUTE_FORCE
+    }
+  learner_created: true
+- name: build.gradle
+  visible: true
+  text: |-
+    plugins {
+        id 'java'
+        id 'org.springframework.boot' version '2.3.1.RELEASE'
+        id 'io.spring.dependency-management' version '1.0.9.RELEASE'
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    sourceSets.main.resources.srcDirs = ["src/resources"]
+
+    dependencies {
+        implementation 'org.springframework.boot:spring-boot-starter'
+        implementation 'org.springframework.boot:spring-boot-starter-actuator'
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+        implementation group: 'org.hibernate', name: 'hibernate-validator', version: '6.1.0.Final'
+    }
+  learner_created: false
+- name: src/account/CustomAccessDeniedHandler.java
+  visible: true
+  text: |
+    package account;
+
+    import account.entity.Audit;
+    import account.repository.AuditRepository;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.http.HttpStatus;
+    import org.springframework.security.access.AccessDeniedException;
+    import org.springframework.security.core.Authentication;
+    import org.springframework.security.core.context.SecurityContextHolder;
+    import org.springframework.security.web.access.AccessDeniedHandler;
+    import org.springframework.stereotype.Component;
+    import org.springframework.web.server.ResponseStatusException;
+
+    import javax.servlet.ServletException;
+    import javax.servlet.http.HttpServletRequest;
+    import javax.servlet.http.HttpServletResponse;
+    import java.io.IOException;
+
+    public class CustomAccessDeniedHandler implements AccessDeniedHandler {
+        private AuditRepository auditRepository;
+
+        public CustomAccessDeniedHandler(AuditRepository auditRepository) {
+            this.auditRepository = auditRepository;
+        }
+
+        @Override
+        public void handle(
+                HttpServletRequest request,
+                HttpServletResponse response,
+                AccessDeniedException exc) throws IOException, ServletException {
+            Authentication auth
+                    = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null) {
+                System.out.println("User: " + auth.getName()
+                        + " attempted to access the protected URL: "
+                        + request.getRequestURI());
+                Audit audit = new Audit();
+                audit.setAction(AUDIT_EVENTS.ACCESS_DENIED.name());
+                audit.setSubject(auth.getName().toLowerCase());
+                audit.setObject(request.getRequestURI());
+                audit.setPath(request.getRequestURI());
+                auditRepository.save(audit);
+            }
+
+
+            response.sendError(HttpStatus.FORBIDDEN.value(), "Access Denied!");
+        }
+    }
+  learner_created: true
+- name: src/account/CustomAuthenticationFailureHandler.java
+  visible: true
+  text: |
+    package account;
+
+    import org.springframework.security.core.AuthenticationException;
+    import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
+    import org.springframework.stereotype.Component;
+
+    import javax.servlet.ServletException;
+    import javax.servlet.http.HttpServletRequest;
+    import javax.servlet.http.HttpServletResponse;
+    import java.io.IOException;
+
+    @Component
+    public class CustomAuthenticationFailureHandler extends SimpleUrlAuthenticationFailureHandler {
+
+        @Override
+        public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
+                                            AuthenticationException exception) throws IOException, ServletException {
+            String email = request.getParameter("email");
+            String path = request.getContextPath();
+            System.out.println(email);
+            System.out.println(path);
+
+
+        }
+    }
+  learner_created: true
+- name: src/resources/application.properties
+  visible: true
+  text: |-
+    server.port=28852
+    management.endpoints.web.exposure.include=*
+    management.endpoint.shutdown.enabled=true
+    spring.jackson.serialization.INDENT_OUTPUT=true
+  learner_created: false
+- name: src/resources/keystore/service.p12
+  visible: true
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/217/stages/1092/implement#comment
-status: Unchecked
-record: -1
+status: Failed
+feedback:
+  message: "Wrong answer in test #1\n\nCan&#39;t establish https connection!\n\nPlease\
+    \ find below the output of your program during this failed test.\n\n---\n\nstdout:\n\
+    .   ____          _            __ _ _\n /\\\\ / ___&#39;_ __ _ _(_)_ __  __ _\
+    \ \\ \\ \\ \\\n( ( )\\___ | &#39;_ | &#39;_| | &#39;_ \\/ _` | \\ \\ \\ \\\n \\\
+    \\/  ___)| |_)| | | | | || (_| |  ) ) ) )\n  &#39;  |____| .__|_| |_|_| |_\\__,\
+    \ | / / / /\n =========|_|==============|___/=/_/_/_/\n :: Spring Boot ::    \
+    \    (v2.3.1.RELEASE)\n\n2022-03-29 12:45:25.349  INFO 32 --- [    Test worker]\
+    \ account.AccountServiceApplication        : Starting AccountServiceApplication\
+    \ on WIN-V2VIIKH07VR with PID 32 (started by user in C:\\Users\\user\\IdeaProjects\\\
+    grpc\\Account Service\\Account Service\\task)\n2022-03-29 12:45:25.352  INFO 32\
+    \ --- [    Test worker] account.AccountServiceApplication        : No active profile\
+    \ set, falling back to default profiles: default\n2022-03-29 12:45:26.340  INFO\
+    \ 32 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping\
+    \ Spring Data JPA repositories in DEFERRED mode.\n2022-03-29 12:45:26.419  INFO\
+    \ 32 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished\
+    \ Spring Data repository scanning in 69ms. Found 4 JPA repository interfaces.\n\
+    2022-03-29 12:45:27.108  INFO 32 --- [    Test worker] o.s.b.w.embedded.tomcat.TomcatWebServer\
+    \  : Tomcat initialized with port(s): 28852 (http)\n2022-03-29 12:45:27.119  INFO\
+    \ 32 --- [    Test worker] o.apache.catalina.core.StandardService   : Starting\
+    \ service [Tomcat]\n2022-03-29 12:45:27.120  INFO 32 --- [    Test worker] org.apache.catalina.core.StandardEngine\
+    \  : Starting Servlet engine: [Apache Tomcat/9.0.36]\n2022-03-29 12:45:27.230\
+    \  INFO 32 --- [    Test worker] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing\
+    \ Spring embedded WebApplicationContext\n2022-03-29 12:45:27.230  INFO 32 ---\
+    \ [    Test worker] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext:\
+    \ initialization completed in 1838 ms\n2022-03-29 12:45:27.423  INFO 32 --- [\
+    \    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...\n\
+    2022-03-29 12:45:27.620  INFO 32 --- [    Test worker] com.zaxxer.hikari.HikariDataSource\
+    \       : HikariPool-1 - Start completed.\n2022-03-29 12:45:27.628  INFO 32 ---\
+    \ [    Test worker] o.s.b.a.h2.H2ConsoleAutoConfiguration    : H2 console available\
+    \ at &#39;/h2&#39;. Database available at &#39;jdbc:h2:file:../service_db&#39;\n\
+    2022-03-29 12:45:27.770  INFO 32 --- [    Test worker] o.s.s.concurrent.ThreadPoolTaskExecutor\
+    \  : Initializing ExecutorService &#39;applicationTaskExecutor&#39;\n2022-03-29\
+    \ 12:45:27.866  INFO 32 --- [         task-1] o.hibernate.jpa.internal.util.LogHelper\
+    \  : HHH000204: Processing PersistenceUnitInfo [name: default]\n2022-03-29 12:45:27.921\
+    \  WARN 32 --- [    Test worker] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view\
+    \ is enabled by default. Therefore, database queries may be performed during view\
+    \ rendering. Explicitly configure spring.jpa.open-in-view to disable this warning\n\
+    2022-03-29 12:45:28.008  INFO 32 --- [         task-1] org.hibernate.Version \
+    \                   : HHH000412: Hibernate ORM core version 5.4.17.Final\n2022-03-29\
+    \ 12:45:28.233  INFO 32 --- [         task-1] o.hibernate.annotations.common.Version\
+    \   : HCANN000001: Hibernate Commons Annotations {5.1.0.Final}\n2022-03-29 12:45:28.352\
+    \  INFO 32 --- [         task-1] org.hibernate.dialect.Dialect            : HHH000400:\
+    \ Using dialect: org.hibernate.dialect.H2Dialect\nHibernate: create table audit\
+    \ (id bigint generated by default as identity, action varchar(255), date timestamp,\
+    \ object varchar(255), path varchar(255), subject varchar(255), primary key (id))\n\
+    Hibernate: create table payment (id bigint generated by default as identity, employee\
+    \ varchar(255), period varchar(255), salary bigint, user_id bigint not null, primary\
+    \ key (id))\nHibernate: create table principle_groups (id bigint generated by\
+    \ default as identity, name varchar(255) not null, primary key (id))\nHibernate:\
+    \ create table user (id bigint generated by default as identity, email varchar(255),\
+    \ lastname varchar(255), login_failure bigint, name varchar(255), password varchar(255),\
+    \ primary key (id))\nHibernate: create table user_roles (user_id bigint not null,\
+    \ roles_id bigint not null, primary key (user_id, roles_id))\nHibernate: alter\
+    \ table principle_groups drop constraint if exists UK_5978cxf729tp2l1wedsnjy7cc\n\
+    Hibernate: alter table principle_groups add constraint UK_5978cxf729tp2l1wedsnjy7cc\
+    \ unique (name)\nHibernate: alter table payment add constraint FK4spfnm9si9dowsatcqs5or42i\
+    \ foreign key (user_id) references user\nHibernate: alter table user_roles add\
+    \ constraint FK1tes5l53ii9ovn7y0xw2taaw2 foreign key (roles_id) references principle_groups\n\
+    Hibernate: alter table user_roles add constraint FK55itppkw3i07do3h7qoclqd4k foreign\
+    \ key (user_id) references user\n2022-03-29 12:45:29.183  INFO 32 --- [      \
+    \   task-1] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000490: Using JtaPlatform\
+    \ implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]\n\
+    2022-03-29 12:45:29.191  INFO 32 --- [         task-1] j.LocalContainerEntityManagerFactoryBean\
+    \ : Initialized JPA EntityManagerFactory for persistence unit &#39;default&#39;\n\
+    Hibernate: insert into principle_groups (id, name) values (null, ?)\nHibernate:\
+    \ insert into principle_groups (id, name) values (null, ?)\nHibernate: insert\
+    \ into principle_groups (id, name) values (null, ?)\nHibernate: insert into principle_groups\
+    \ (id, name) values (null, ?)\n2022-03-29 12:45:29.814  INFO 32 --- [    Test\
+    \ worker] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 14 endpoint(s) beneath\
+    \ base path &#39;/actuator&#39;\n2022-03-29 12:45:29.859  INFO 32 --- [    Test\
+    \ worker] o.s.s.web.DefaultSecurityFilterChain     : Creating filter chain: any\
+    \ request, [org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@7b764b8,\
+    \ org.springframework.security.web.context.SecurityContextPersistenceFilter@f88836b,\
+    \ org.springframework.security.web.header.HeaderWriterFilter@4fec74bf, org.springframework.security.web.authentication.logout.LogoutFilter@1dc7a42,\
+    \ org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@7eeaba50,\
+    \ org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter@60898ac7,\
+    \ org.springframework.security.web.authentication.ui.DefaultLogoutPageGeneratingFilter@7b1446aa,\
+    \ org.springframework.security.web.authentication.www.BasicAuthenticationFilter@1059546a,\
+    \ org.springframework.security.web.savedrequest.RequestCacheAwareFilter@487597d4,\
+    \ org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@5cc750e5,\
+    \ org.springframework.security.web.authentication.AnonymousAuthenticationFilter@d89bd05,\
+    \ org.springframework.security.web.session.SessionManagementFilter@25c9dfe0, org.springframework.security.web.access.ExceptionTranslationFilter@73eb550,\
+    \ org.springframework.security.web.access.intercept.FilterSecurityInterceptor@ab3e54e]\n\
+    2022-03-29 12:45:30.065  INFO 32 --- [    Test worker] o.s.b.w.embedded.tomcat.TomcatWebServer\
+    \  : Tomcat started on port(s): 28852 (http) with context path &#39;&#39;\n2022-03-29\
+    \ 12:45:30.066  INFO 32 --- [    Test worker] DeferredRepositoryInitializationListener\
+    \ : Triggering deferred initialization of Spring Data repositories…\n2022-03-29\
+    \ 12:45:30.105  INFO 32 --- [    Test worker] DeferredRepositoryInitializationListener\
+    \ : Spring Data repositories initialized!\n2022-03-29 12:45:30.114  INFO 32 ---\
+    \ [    Test worker] account.AccountServiceApplication        : Started AccountServiceApplication\
+    \ in 5.128 seconds (JVM running for 5.869)\n2022-03-29 12:45:30.289  INFO 32 ---\
+    \ [io-28852-exec-1] o.apache.coyote.http11.Http11Processor   : Error parsing HTTP\
+    \ request header\n Note: further occurrences of HTTP request parsing errors will\
+    \ be logged at DEBUG level.\n\njava.lang.IllegalArgumentException: Invalid character\
+    \ found in method name [0x160x030x030x010x930x010x000x010x8f0x030x030xc90x100x8e+0x1150xf4K0xf8`ye0x870xdf0x0c0x810xdb0x880xb9K0xaaz0xe80xb0m0xd20xc90xd8d0x080x860xf5].\
+    \ HTTP method names must be tokens\n\tat org.apache.coyote.http11.Http11InputBuffer.parseRequestLine(Http11InputBuffer.java:418)\
+    \ ~[tomcat-embed-core-9.0.36.jar:9.0.36]\n\tat org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:260)\
+    \ ~[tomcat-embed-core-9.0.36.jar:9.0.36]\n\tat org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:65)\
+    \ ~[tomcat-embed-core-9.0.36.jar:9.0.36]\n\tat org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:868)\
+    \ ~[tomcat-embed-core-9.0.36.jar:9.0.36]\n\tat org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1590)\
+    \ ~[tomcat-embed-core-9.0.36.jar:9.0.36]\n\tat org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:49)\
+    \ ~[tomcat-embed-core-9.0.36.jar:9.0.36]\n\tat java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128)\
+    \ ~[na:na]\n\tat java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628)\
+    \ ~[na:na]\n\tat org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)\
+    \ ~[tomcat-embed-core-9.0.36.jar:9.0.36]\n\tat java.base/java.lang.Thread.run(Thread.java:834)\
+    \ ~[na:na]\n\njavax.net.ssl.SSLPeerUnverifiedException: peer not authenticated\n\
+    Connection not found\n\nstderr:\njavax.net.ssl.SSLPeerUnverifiedException: peer\
+    \ not authenticated\n\tat java.base/sun.security.ssl.SSLSessionImpl.getPeerCertificates(SSLSessionImpl.java:556)\n\
+    \tat AccountServiceTest.getCertificates(AccountServiceTest.java:60)\n\tat AccountServiceTest.checkCertificateName(AccountServiceTest.java:44)\n\
+    \tat AccountServiceTest.lambda$new$0(AccountServiceTest.java:84)\n\tat org.hyperskill.hstest.dynamic.input.DynamicTesting.lambda$null$2(DynamicTesting.java:289)\n\
+    \tat org.hyperskill.hstest.dynamic.input.DynamicTesting$1DynamicTestElement.lambda$null$0(DynamicTesting.java:252)\n\
+    \tat org.hyperskill.hstest.testing.runner.SpringApplicationRunner.test(SpringApplicationRunner.java:43)\n\
+    \tat org.hyperskill.hstest.testing.TestRun.test(TestRun.java:87)\n\tat org.hyperskill.hstest.stage.StageTest.start(StageTest.java:116)\n\
+    \tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n\
+    \tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)\n\
+    \tat java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)\n\
+    \tat java.base/java.lang.reflect.Method.invoke(Method.java:566)\n\tat org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)\n\
+    \tat org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)\n\
+    \tat org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)\n\
+    \tat org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)\n\
+    \tat org.junit.internal.runners.statements.RunAfters.evaluate(RunAfters.java:27)\n\
+    \tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)\n\
+    \tat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)\n\
+    \tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)\n\
+    \tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\
+    \tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\
+    \tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\
+    \tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat org.gradle.api.internal.tasks.testing.junit.JUnitTestClassExecutor.runTestClass(JUnitTestClassExecutor.java:110)\n\
+    \tat org.gradle.api.internal.tasks.testing.junit.JUnitTestClassExecutor.execute(JUnitTestClassExecutor.java:58)\n\
+    \tat org.gradle.api.internal.tasks.testing.junit.JUnitTestClassExecutor.execute(JUnitTestClassExecutor.java:38)\n\
+    \tat org.gradle.api.internal.tasks.testing.junit.AbstractJUnitTestClassProcessor.processTestClass(AbstractJUnitTestClassProcessor.java:62)\n\
+    \tat org.gradle.api.internal.tasks.testing.SuiteTestClassProcessor.processTestClass(SuiteTestClassProcessor.java:51)\n\
+    \tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n\
+    \tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)\n\
+    \tat java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)\n\
+    \tat java.base/java.lang.reflect.Method.invoke(Method.java:566)\n\tat org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:36)\n\
+    \tat org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:24)\n\
+    \tat org.gradle.internal.dispatch.ContextClassLoaderDispatch.dispatch(ContextClassLoaderDispatch.java:33)\n\
+    \tat org.gradle.internal.dispatch.ProxyDispatchAdapter$DispatchingInvocationHandler.invoke(ProxyDispatchAdapter.java:94)\n\
+    \tat com.sun.proxy.$Proxy2.processTestClass(Unknown Source)\n\tat org.gradle.api.internal.tasks.testing.worker.TestWorker.processTestClass(TestWorker.java:119)\n\
+    \tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n\
+    \tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)\n\
+    \tat java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)\n\
+    \tat java.base/java.lang.reflect.Method.invoke(Method.java:566)\n\tat org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:36)\n\
+    \tat org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:24)\n\
+    \tat org.gradle.internal.remote.internal.hub.MessageHubBackedObjectConnection$DispatchWrapper.dispatch(MessageHubBackedObjectConnection.java:182)\n\
+    \tat org.gradle.internal.remote.internal.hub.MessageHubBackedObjectConnection$DispatchWrapper.dispatch(MessageHubBackedObjectConnection.java:164)\n\
+    \tat org.gradle.internal.remote.internal.hub.MessageHub$Handler.run(MessageHub.java:414)\n\
+    \tat org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)\n\
+    \tat org.gradle.internal.concurrent.ManagedExecutorImpl$1.run(ManagedExecutorImpl.java:48)\n\
+    \tat java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128)\n\
+    \tat java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628)\n\
+    \tat org.gradle.internal.concurrent.ThreadFactoryImpl$ManagedThreadRunnable.run(ThreadFactoryImpl.java:56)\n\
+    \tat java.base/java.lang.Thread.run(Thread.java:834)\njava.lang.NullPointerException\n\
+    \tat AccountServiceTest.findCert(AccountServiceTest.java:70)\n\tat AccountServiceTest.checkCertificateName(AccountServiceTest.java:45)\n\
+    \tat AccountServiceTest.lambda$new$0(AccountServiceTest.java:84)\n\tat org.hyperskill.hstest.dynamic.input.DynamicTesting.lambda$null$2(DynamicTesting.java:289)\n\
+    \tat org.hyperskill.hstest.dynamic.input.DynamicTesting$1DynamicTestElement.lambda$null$0(DynamicTesting.java:252)\n\
+    \tat org.hyperskill.hstest.testing.runner.SpringApplicationRunner.test(SpringApplicationRunner.java:43)\n\
+    \tat org.hyperskill.hstest.testing.TestRun.test(TestRun.java:87)\n\tat org.hyperskill.hstest.stage.StageTest.start(StageTest.java:116)\n\
+    \tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n\
+    \tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)\n\
+    \tat java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)\n\
+    \tat java.base/java.lang.reflect.Method.invoke(Method.java:566)\n\tat org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)\n\
+    \tat org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)\n\
+    \tat org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)\n\
+    \tat org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)\n\
+    \tat org.junit.internal.runners.statements.RunAfters.evaluate(RunAfters.java:27)\n\
+    \tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\tat org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)\n\
+    \tat org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)\n\tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)\n\
+    \tat org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)\n\
+    \tat org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)\n\tat org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)\n\
+    \tat org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)\n\tat org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)\n\
+    \tat org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)\n\tat org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)\n\
+    \tat org.junit.runners.ParentRunner.run(ParentRunner.java:413)\n\tat org.gradle.api.internal.tasks.testing.junit.JUnitTestClassExecutor.runTestClass(JUnitTestClassExecutor.java:110)\n\
+    \tat org.gradle.api.internal.tasks.testing.junit.JUnitTestClassExecutor.execute(JUnitTestClassExecutor.java:58)\n\
+    \tat org.gradle.api.internal.tasks.testing.junit.JUnitTestClassExecutor.execute(JUnitTestClassExecutor.java:38)\n\
+    \tat org.gradle.api.internal.tasks.testing.junit.AbstractJUnitTestClassProcessor.processTestClass(AbstractJUnitTestClassProcessor.java:62)\n\
+    \tat org.gradle.api.internal.tasks.testing.SuiteTestClassProcessor.processTestClass(SuiteTestClassProcessor.java:51)\n\
+    \tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n\
+    \tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)\n\
+    \tat java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)\n\
+    \tat java.base/java.lang.reflect.Method.invoke(Method.java:566)\n\tat org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:36)\n\
+    \tat org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:24)\n\
+    \tat org.gradle.internal.dispatch.ContextClassLoaderDispatch.dispatch(ContextClassLoaderDispatch.java:33)\n\
+    \tat org.gradle.internal.dispatch.ProxyDispatchAdapter$DispatchingInvocationHandler.invoke(ProxyDispatchAdapter.java:94)\n\
+    \tat com.sun.proxy.$Proxy2.processTestClass(Unknown Source)\n\tat org.gradle.api.internal.tasks.testing.worker.TestWorker.processTestClass(TestWorker.java:119)\n\
+    \tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n\
+    \tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)\n\
+    \tat java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)\n\
+    \tat java.base/java.lang.reflect.Method.invoke(Method.java:566)\n\tat org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:36)\n\
+    \tat org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:24)\n\
+    \tat org.gradle.internal.remote.internal.hub.MessageHubBackedObjectConnection$DispatchWrapper.dispatch(MessageHubBackedObjectConnection.java:182)\n\
+    \tat org.gradle.internal.remote.internal.hub.MessageHubBackedObjectConnection$DispatchWrapper.dispatch(MessageHubBackedObjectConnection.java:164)\n\
+    \tat org.gradle.internal.remote.internal.hub.MessageHub$Handler.run(MessageHub.java:414)\n\
+    \tat org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)\n\
+    \tat org.gradle.internal.concurrent.ManagedExecutorImpl$1.run(ManagedExecutorImpl.java:48)\n\
+    \tat java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128)\n\
+    \tat java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628)\n\
+    \tat org.gradle.internal.concurrent.ThreadFactoryImpl$ManagedThreadRunnable.run(ThreadFactoryImpl.java:56)\n\
+    \tat java.base/java.lang.Thread.run(Thread.java:834)"
+  time: Tue, 29 Mar 2022 05:45:31 UTC
+record: 7
